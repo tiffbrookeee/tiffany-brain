@@ -2,10 +2,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 const T = {
-  bg:"#0F0D0C", surface:"#161210", card:"#1C1815", border:"#272220",
-  borderLight:"#333028", gold:"#C4955A", wine:"#8B3A52",
-  cream:"#F0E8DC", muted:"#8A8078", mutedLight:"#B8AFA5",
-  green:"#5A7A62", blue:"#4A6B8A", purple:"#6A5A8A",
+  bg:"#FAF8F5", surface:"#F2EEE8", card:"#FFFFFF", border:"#E4DDD4",
+  borderLight:"#CEC6BC", gold:"#A67C3D", wine:"#7A2A40",
+  cream:"#2C2420", muted:"#8A7E74", mutedLight:"#5C504A",
+  green:"#3A6042", blue:"#2A5070", purple:"#4A3A6A",
 };
 
 const BUCKETS = [
@@ -1087,7 +1087,7 @@ export default function SecondBrain(){
     }
     if(!document.getElementById("brain-styles")){
       const s=document.createElement("style");s.id="brain-styles";
-      s.textContent=`*{box-sizing:border-box}body{background:#0F0D0C;margin:0}::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:#2e2824;border-radius:4px}textarea{resize:vertical}@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}`;
+      s.textContent=`*{box-sizing:border-box}body{background:#FAF8F5;margin:0}::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:#2e2824;border-radius:4px}textarea{resize:vertical}@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}`;
       document.head.appendChild(s);
     }
   },[]);
