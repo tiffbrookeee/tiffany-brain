@@ -350,7 +350,7 @@ function Dashboard({tasks,toggleTask,contentItems,gcalEvents,openCapture,syncing
 
   const gen=async()=>{
     setLoading(true);
-    const pending=tasks.filter(t=>!t.done).slice(0,6).map(t=>`${t.title}${t.area?` [${t.area}]`:""}${t.priority==="High"?" 🔴":""}`).join(", ")||"nothing queued";
+    const pending=tasks.filter(t=>!t.done).slice(0,6).map(t=>t.title+(t.area?" ["+t.area+"]":"")+(t.priority==="High"?" 🔴":"")).join(", ")||"nothing queued";
     const upcoming=gcalEvents.slice(0,3).map(e=>`${e.title} on ${new Date(e.start).toLocaleDateString()}`).join(", ")||"no upcoming events";
     try{
       const txt=await askClaude(`Generate Tiff's morning brief for ${today}. Under 250 words, punchy, big sister energy.\n\nFormat:\n☀️ GOOD MORNING, TIFF\n[2 sentences — energizing]\n\n📋 YOUR FOCUS TODAY\nTasks: ${pending}. Upcoming: ${upcoming}.\n\n📱 TRENDING CONTENT ANGLES\n• [Career/empowerment angle]\n• [Current event tie-in]\n• [Vixens N Darlings angle]\n\n💡 HOOK OF THE DAY\n[One hook + which bucket]\n\n🔥 REMINDER\n[1 line. Her voice.]`,[]);
