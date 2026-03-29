@@ -288,8 +288,7 @@ const TASK_STATUSES=["To Do","In Progress","Done"];
 const STATUS_COLORS_MAP={"To Do":T.muted,"In Progress":T.gold,"Done":T.green};
 
 function TaskCards({tasks,toggleTask,updateTask,quickAddTask,openCapture,syncing,lastSync,syncError,onSync}){
-  const [dump,setDump]=useState("");
-  const [adding,setAdding]=useState(false);
+  
 
   const pending=tasks.filter(t=>!t.done);
   const done=tasks.filter(t=>t.done);
