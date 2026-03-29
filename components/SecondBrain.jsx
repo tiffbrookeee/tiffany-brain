@@ -1448,5 +1448,6 @@ const quickAddTask=useCallback(async(title,priority="Medium",area=null)=>{
     </div>
 
     {capture&&<CaptureModal type={capture==="note"?"note":capture} onClose={()=>setCapture(null)} onSave={handleSave} curHub={hub}/>}
+{showRitual&&<MorningRitual onComplete={()=>setShowRitual(false)}/>}
   </div>;
 }
