@@ -1391,11 +1391,11 @@ const updateTask=useCallback(async(id,updates)=>{
   if(!String(id).startsWith("temp-"))await notion.updateTask(id,updates);
 },[]);
 
-const quickAddTask=useCallback(async(title)=>{
+const quickAddTask=useCallback(async(title,priority="Medium",area=null)=>{
   if(!title.trim())return;
-  const temp={id:`temp-${Date.now()}`,title,priority:"Medium",area:null,done:false,status:"To Do",source:"local"};
+  const temp={id:`temp-${Date.now()}`,title,priority,area,done:false,status:"To Do",source:"local"};
   setTasks(p=>[temp,...p]);
-  const created=await notion.createTask(title,"Medium",null);
+  const created=await notion.createTask(title,priority,area);
   if(created)setTasks(p=>p.map(t=>t.id===temp.id?created:t));
 },[]);
   
