@@ -1371,7 +1371,12 @@ export default function SecondBrain(){
     try{const r=await fetch("/api/notion?type=content");if(r.ok){const d=await r.json();if(d.content){setContentItems(d.content);store.set("content_items",d.content);}}}catch{}
   },[]);
 
-  useEffect(()=>{syncAll();},[syncAll]);
+  useEffect(()=>{
+  syncAll();
+  store.get("morning_complete").then(d=>{
+    if(d!==new Date().toDateString()) setShowRitual(true);
+  });
+},[syncAll]);
 
   const handleSave=async({type,text,hook,priority,area,bucket,hub:th})=>{
     if(type==="task"){
