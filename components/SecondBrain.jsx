@@ -1330,6 +1330,7 @@ export default function SecondBrain(){
   const [gcalEvents,setGcalEvents]=useState([]);
   const [capture,setCapture]=useState(null);
   const [collapsed,setCollapsed]=useState(false);
+ const [showRitual,setShowRitual]=useState(false);
   const [syncing,setSyncing]=useState(false);
   const [lastSync,setLastSync]=useState(null);
   const [syncError,setSyncError]=useState(false);
