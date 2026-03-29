@@ -411,7 +411,7 @@ function Dashboard({tasks,toggleTask,updateTask,quickAddTask,contentItems,gcalEv
     {/* Calendar or Tasks */}
     {view==="calendar"
       ?<Card><CalendarView tasks={tasks} contentItems={contentItems} gcalEvents={gcalEvents} onDayClick={()=>{}}/></Card>
-      :<TaskCards tasks={tasks} toggleTask={toggleTask} openCapture={openCapture} syncing={syncing} lastSync={lastSync} syncError={syncError} onSync={onSync}/>}
+      :<TaskCards tasks={tasks} toggleTask={toggleTask} updateTask={updateTask} quickAddTask={quickAddTask} openCapture={openCapture} syncing={syncing} lastSync={lastSync} syncError={syncError} onSync={onSync}/>}
   </div>;
 }
 
