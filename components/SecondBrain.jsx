@@ -1177,7 +1177,7 @@ const quickAddTask=useCallback(async(title)=>{
             <Btn onClick={()=>setCapture("task")} variant="soft" sm>+ Task</Btn>
           </div>
         </div>
-        {hub==="dashboard"&&<Dashboard tasks={tasks} toggleTask={toggleTask} contentItems={contentItems} gcalEvents={gcalEvents} openCapture={setCapture} syncing={syncing} lastSync={lastSync} syncError={syncError} onSync={syncAll}/>}
+        {hub==="dashboard"&&<Dashboard tasks={tasks} toggleTask={toggleTask} updateTask={updateTask} quickAddTask={quickAddTask} contentItems={contentItems} gcalEvents={gcalEvents} openCapture={setCapture} syncing={syncing} lastSync={lastSync} syncError={syncError} onSync={syncAll}/>}
         {hub==="content"&&<ContentHub contentItems={contentItems} setContentItems={setContentItems} onSyncContent={syncContent}/>}
         {hub==="brand"&&<BrandHub/>}
         {hub==="college"&&<CollegeHub/>}
