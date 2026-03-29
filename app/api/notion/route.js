@@ -158,13 +158,16 @@ export async function POST(request) {
 
 export async function PATCH(request) {
   try {
-    const { pageId, type, status } = await request.json();
+    const { pageId, type, status, priority } = await request.json();
 
-    if (type === 'task') {
-      await patchPage(pageId, { Status: { select: { name: status } } });
-    } else if (type === 'content') {
-      await patchPage(pageId, { Status: { select: { name: status } } });
-    }
+if (type === 'task') {
+  const properties = {};
+  if (status) properties.Status = { select: { name: status } };
+  if (priority) properties.Priority = { select: { name: priority } };
+  await patchPage(pageId, properties);
+} else if (type === 'content') {
+  await patchPage(pageId, { Status: { select: { name: status } } });
+}
 
     return NextResponse.json({ success: true });
   } catch (err) {
