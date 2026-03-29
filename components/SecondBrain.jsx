@@ -340,7 +340,7 @@ function TaskCards({tasks,toggleTask,openCapture,syncing,lastSync,syncError,onSy
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
-function Dashboard({tasks,toggleTask,contentItems,gcalEvents,openCapture,syncing,lastSync,syncError,onSync}){
+function Dashboard({tasks,toggleTask,updateTask,quickAddTask,contentItems,gcalEvents,openCapture,syncing,lastSync,syncError,onSync}){
   const [brief,setBrief]=useState(null);
   const [loading,setLoading]=useState(false);
   const [view,setView]=useState("calendar");
