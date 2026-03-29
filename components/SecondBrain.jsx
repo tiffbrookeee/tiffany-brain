@@ -277,29 +277,78 @@ function CalendarView({tasks, contentItems, gcalEvents, onDayClick}){
 }
 
 // ── TASK CARDS ────────────────────────────────────────────────────────────────
-function TaskCards({tasks,toggleTask,openCapture,syncing,lastSync,syncError,onSync}){
+const TASK_STATUSES=["To Do","In Progress","Done"];
+const STATUS_COLORS_MAP={"To Do":T.muted,"In Progress":T.gold,"Done":T.green};
+
+function TaskCards({tasks,toggleTask,updateTask,quickAddTask,openCapture,syncing,lastSync,syncError,onSync}){
+  const [dump,setDump]=useState("");
+  const [adding,setAdding]=useState(false);
+
   const pending=tasks.filter(t=>!t.done);
   const done=tasks.filter(t=>t.done);
   const high=pending.filter(t=>t.priority==="High");
   const med=pending.filter(t=>t.priority==="Medium");
   const low=pending.filter(t=>t.priority==="Low"||!t.priority);
 
+  const handleDump=async(e)=>{
+    if(e.key==="Enter"&&dump.trim()&&!adding){
+      setAdding(true);
+      await quickAddTask(dump.trim());
+      setDump("");setAdding(false);
+    }
+  };
+
+  const cyclePriority=(task)=>{
+    const order=["High","Medium","Low"];
+    const next=order[(order.indexOf(task.priority||"Low")+1)%3];
+    updateTask(task.id,{priority:next});
+  };
+
   const TaskCard=({task})=>{
     const [hov,sH]=useState(false);
-    return <div onClick={()=>toggleTask(task.id)}
-      onMouseEnter={()=>sH(true)} onMouseLeave={()=>sH(false)}
+    const [statusOpen,setStatusOpen]=useState(false);
+    return <div onMouseEnter={()=>sH(true)} onMouseLeave={()=>{sH(false);setStatusOpen(false);}}
       style={{background:hov?T.surface:T.card,
         border:`1px solid ${hov?PRIORITY_COLORS[task.priority]||T.border:T.border}`,
         borderLeft:`3px solid ${PRIORITY_COLORS[task.priority]||T.borderLight}`,
-        borderRadius:10,padding:"11px 14px",cursor:"pointer",transition:"all .15s",marginBottom:8}}>
+        borderRadius:10,padding:"10px 13px",transition:"all .15s",marginBottom:8,position:"relative"}}>
       <div style={{display:"flex",alignItems:"flex-start",gap:9}}>
-        <div style={{width:14,height:14,borderRadius:3,marginTop:2,flexShrink:0,transition:"all .15s",
+        {/* Checkbox */}
+        <div onClick={()=>toggleTask(task.id)} style={{width:14,height:14,borderRadius:3,marginTop:3,flexShrink:0,cursor:"pointer",
           border:`2px solid ${task.done?T.green:PRIORITY_COLORS[task.priority]||T.borderLight}`,
-          background:task.done?T.green:"transparent"}}/>
+          background:task.done?T.green:"transparent",transition:"all .15s"}}/>
         <div style={{flex:1,minWidth:0}}>
           <div style={{fontSize:13,color:task.done?T.muted:T.cream,fontWeight:500,
-            textDecoration:task.done?"line-through":"none",lineHeight:1.4,marginBottom:4}}>{task.title}</div>
+            textDecoration:task.done?"line-through":"none",lineHeight:1.4,marginBottom:5}}>{task.title}</div>
+          {/* Controls row */}
           <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center"}}>
+            {/* Priority pill — click to cycle */}
+            <button onClick={()=>cyclePriority(task)} title="Click to change priority"
+              style={{background:`${PRIORITY_COLORS[task.priority]||T.muted}22`,color:PRIORITY_COLORS[task.priority]||T.muted,
+                border:`1px solid ${PRIORITY_COLORS[task.priority]||T.muted}44`,borderRadius:20,
+                padding:"2px 8px",fontSize:10,fontWeight:500,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
+              {task.priority||"Low"}
+            </button>
+            {/* Status selector */}
+            <div style={{position:"relative"}}>
+              <button onClick={()=>setStatusOpen(p=>!p)}
+                style={{background:`${STATUS_COLORS_MAP[task.status||"To Do"]}22`,
+                  color:STATUS_COLORS_MAP[task.status||"To Do"],
+                  border:`1px solid ${STATUS_COLORS_MAP[task.status||"To Do"]}44`,
+                  borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:500,cursor:"pointer",fontFamily:"'DM Sans',sans-serif"}}>
+                {task.status||"To Do"} ▾
+              </button>
+              {statusOpen&&<div style={{position:"absolute",top:"100%",left:0,marginTop:3,background:T.card,
+                border:`1px solid ${T.border}`,borderRadius:8,zIndex:10,minWidth:120,overflow:"hidden",boxShadow:"0 4px 12px #0003"}}>
+                {TASK_STATUSES.map(s=><div key={s} onClick={()=>{updateTask(task.id,{status:s,done:s==="Done"});setStatusOpen(false);}}
+                  style={{padding:"7px 12px",fontSize:12,color:STATUS_COLORS_MAP[s],cursor:"pointer",
+                    background:"transparent",transition:"background .1s"}}
+                  onMouseEnter={e=>e.currentTarget.style.background=T.surface}
+                  onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                  {s}
+                </div>)}
+              </div>}
+            </div>
             {task.area&&<Tag label={task.area} color={AREA_COLORS[task.area]||T.muted} small/>}
             {task.due&&<span style={{fontSize:10,color:T.muted}}>📅 {new Date(task.due+"T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"})}</span>}
           </div>
@@ -321,7 +370,7 @@ function TaskCards({tasks,toggleTask,openCapture,syncing,lastSync,syncError,onSy
   </div>;
 
   return <div>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
       <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:20,color:T.cream}}>
         Tasks <span style={{fontSize:14,color:T.muted,fontFamily:"'DM Sans',sans-serif"}}>{pending.length} open</span>
       </div>
@@ -330,6 +379,19 @@ function TaskCards({tasks,toggleTask,openCapture,syncing,lastSync,syncError,onSy
         <Btn onClick={()=>openCapture("task")} sm>+ Add Task</Btn>
       </div>
     </div>
+
+    {/* Brain dump bar */}
+    <div style={{marginBottom:18,display:"flex",alignItems:"center",gap:8,padding:"10px 14px",
+      background:T.surface,border:`1px solid ${T.border}`,borderRadius:10}}>
+      <span style={{fontSize:14}}>🧠</span>
+      <input value={dump} onChange={e=>setDump(e.target.value)} onKeyDown={handleDump}
+        placeholder="Brain dump — type anything and hit Enter to capture instantly..."
+        style={{flex:1,background:"transparent",border:"none",outline:"none",fontSize:13,
+          color:T.cream,fontFamily:"'DM Sans',sans-serif"}}/>
+      {adding&&<span style={{fontSize:11,color:T.muted}}>Saving...</span>}
+      {dump&&!adding&&<span style={{fontSize:10,color:T.muted}}>↵ Enter</span>}
+    </div>
+
     <div style={{display:"flex",gap:14}}>
       {col("🔴 HIGH",high,T.wine)}
       {col("🟡 MEDIUM",med,T.gold)}
