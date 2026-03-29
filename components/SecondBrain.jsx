@@ -288,7 +288,7 @@ function TaskCards({tasks,toggleTask,openCapture,syncing,lastSync,syncError,onSy
     const [hov,sH]=useState(false);
     return <div onClick={()=>toggleTask(task.id)}
       onMouseEnter={()=>sH(true)} onMouseLeave={()=>sH(false)}
-      style={{background:hov?T.cardHover||"#211D19":T.card,
+      style={{background:hov?T.surface:T.card,
         border:`1px solid ${hov?PRIORITY_COLORS[task.priority]||T.border:T.border}`,
         borderLeft:`3px solid ${PRIORITY_COLORS[task.priority]||T.borderLight}`,
         borderRadius:10,padding:"11px 14px",cursor:"pointer",transition:"all .15s",marginBottom:8}}>
