@@ -26,6 +26,13 @@ const HUBS = [
   {id:"science",label:"Science",icon:"🔬"},
   {id:"ai",label:"AI Lab",icon:"🤖"},
 ];
+const HABITS = [
+  {id:"water", label:"Hydrated (32oz before coffee)", emoji:"💧"},
+  {id:"workout", label:"Moved my body", emoji:"💪"},
+  {id:"journal", label:"Journaled or reflected", emoji:"📓"},
+  {id:"phone", label:"Off phone for first 30 min", emoji:"📵"},
+  {id:"vitamins", label:"Took vitamins", emoji:"💊"},
+];
 
 const AREAS = ["YPO","Brand","School","Personal","Café","Insurance"];
 const PRIORITIES = ["High","Medium","Low"];
