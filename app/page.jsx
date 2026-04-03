@@ -1,6 +1,2 @@
-'use client';
-import SecondBrain from '../components/SecondBrain';
-
-export default function Home() {
-  return <SecondBrain />;
-}
+import Dashboard from '../components/Dashboard';
+export default function Home() { return <Dashboard />; }
