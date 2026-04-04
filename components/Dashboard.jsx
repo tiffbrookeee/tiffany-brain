@@ -1,447 +1,927 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+
+// ─── CONSTANTS ──────────────────────────────────────────────────────────────
+const DOMAINS = [
+  {
+    id: 'ypo',
+    emoji: '🤝',
+    name: 'YPO',
+    desc: 'Mentorship · EO & YNG · Gala',
+    color: '#7C3AED',
+    notionUrl: 'https://www.notion.so/33683fbef7cf81ca870ee859b3fa43fd',
+  },
+  {
+    id: 'insurance',
+    emoji: '💼',
+    name: 'Insurance',
+    desc: 'Clients · Policies · Leads',
+    color: '#0EA5E9',
+    notionUrl: 'https://www.notion.so/33683fbef7cf8118baffeb340c6731b6',
+  },
+  {
+    id: 'cafe',
+    emoji: '☕',
+    name: 'Café',
+    desc: 'Mon & Thu · Philip · Tasks',
+    color: '#D97706',
+    notionUrl: 'https://www.notion.so/33683fbef7cf81b08b1cc7136bab1b52',
+  },
+  {
+    id: 'vnd',
+    emoji: '👗',
+    name: 'Vixens N Darlings',
+    desc: 'Pitch · Brand · Sourcing',
+    color: '#EC4899',
+    notionUrl: 'https://www.notion.so/33683fbef7cf814ca6b0fbc28021b9c2',
+  },
+  {
+    id: 'content',
+    emoji: '📱',
+    name: 'TunedInWithTiff',
+    desc: 'Content · Hooks · Calendar',
+    color: '#10B981',
+    notionUrl: 'https://www.notion.so/33783fbef7cf81ce82d4d280460396a5',
+  },
+];
 
 const HABITS = [
-  { id: 'walk', label: '🚶 Morning Walk' },
-  { id: 'lunch', label: '🥗 Packed Lunch' },
-  { id: 'water', label: '💧 Water in Morning' },
-  { id: 'skincare', label: '🌙 Night Skincare' },
+  { id: 'walk', emoji: '🚶', label: 'Morning Walk' },
+  { id: 'lunch', emoji: '🥗', label: 'Packed Lunch' },
+  { id: 'water', emoji: '💧', label: 'Water' },
+  { id: 'skin', emoji: '🌙', label: 'Night Skincare' },
 ];
 
-const DOMAINS = [
-  { name: 'Tuned In With Tiff', desc: 'Content & Brand', emoji: '😙️', href: '/domains' },
-  { name: 'VND Media', desc: 'Agency & Clients', emoji: '📱', href: '/domains' },
-  { name: 'Armor Insurance', desc: 'Insurance Business', emoji: '🛡️', href: '/domains' },
-  { name: 'YPO', desc: 'Leadership & Mentorship', emoji: '🌐', href: '/domains' },
-  { name: 'Investments', desc: 'Portfolio & Returns', emoji: '📈', href: '/domains' },
-  { name: 'Lifestyle', desc: 'Health & Wellness', emoji: '✨', href: '/domains' },
-  { name: 'Family', desc: 'Home & Relationships', emoji: '🏡', href: '/domains' },
-  { name: 'Learning', desc: 'Books & Growth', emoji: '📚', href: '/domains' },
-];
+// ─── HELPERS ────────────────────────────────────────────────────────────────
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
+}
 
-const C = {
-  bg: '#080810',
-  surface: 'rgba(255,255,255,0.04)',
-  surfaceHover: 'rgba(255,255,255,0.07)',
-  border: 'rgba(255,255,255,0.07)',
-  borderAccent: 'rgba(167,139,250,0.25)',
-  text: '#e2e8f0',
-  muted: '#64748b',
-  dim: '#94a3b8',
-  purple: '#a78bfa',
-  blue: '#60a5fa',
-  green: '#4ade80',
-  red: '#f87171',
-  amber: '#fbbf24',
+function formatDate(d) {
+  return d.toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
+function formatTime(str) {
+  if (!str) return '';
+  try {
+    return new Date(str).toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  } catch {
+    return str;
+  }
+}
+
+// ─── STYLES ────────────────────────────────────────────────────────────────
+const ACCENT = '#1A1A1A';
+
+const S = {
+  root: {
+    minHeight: '100vh',
+    background: '#F8F7F4',
+    fontFamily:
+      '-apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", sans-serif',
+    color: '#1A1A1A',
+  },
+  header: {
+    background: '#fff',
+    borderBottom: '1px solid #EBEBEB',
+    padding: '18px 32px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    position: 'sticky',
+    top: 0,
+    zIndex: 100,
+    boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+  },
+  greeting: { fontSize: 21, fontWeight: 700, color: '#1A1A1A', letterSpacing: '-0.3px' },
+  date: { fontSize: 13, color: '#9B9590', marginTop: 3 },
+  main: {
+    maxWidth: 1300,
+    margin: '0 auto',
+    padding: '24px 28px 48px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 20,
+  },
+  grid2: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 },
+  grid3: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 },
+  card: {
+    background: '#fff',
+    borderRadius: 14,
+    border: '1px solid #EBEBEB',
+    padding: '20px 22px',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+  },
+  sectionLabel: {
+    fontSize: 10,
+    fontWeight: 700,
+    letterSpacing: '0.09em',
+    textTransform: 'uppercase',
+    color: '#B0A8A0',
+    marginBottom: 14,
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+  },
+  taskRow: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: 10,
+    padding: '9px 0',
+    borderBottom: '1px solid #F4F2EF',
+    cursor: 'pointer',
+  },
+  newsRow: {
+    padding: '10px 0',
+    borderBottom: '1px solid #F4F2EF',
+    display: 'block',
+    textDecoration: 'none',
+    cursor: 'pointer',
+  },
+  newsTitle: { fontSize: 13, fontWeight: 500, lineHeight: 1.45, color: '#2A2A2A' },
+  newsSource: { fontSize: 11, color: '#B0A8A0', marginTop: 3 },
+  input: {
+    flex: 1,
+    padding: '11px 14px',
+    border: '1px solid #E2E0DB',
+    borderRadius: 10,
+    fontSize: 14,
+    outline: 'none',
+    background: '#FAFAF8',
+    color: '#1A1A1A',
+  },
+  sendBtn: {
+    padding: '11px 16px',
+    background: ACCENT,
+    color: '#fff',
+    border: 'none',
+    borderRadius: 10,
+    fontSize: 16,
+    fontWeight: 700,
+    cursor: 'pointer',
+    flexShrink: 0,
+  },
+  chatBubble: {
+    padding: '10px 14px',
+    borderRadius: 12,
+    fontSize: 13,
+    lineHeight: 1.55,
+    maxWidth: '88%',
+    whiteSpace: 'pre-wrap',
+    wordBreak: 'break-word',
+  },
+  calRow: {
+    display: 'flex',
+    gap: 12,
+    padding: '9px 0',
+    borderBottom: '1px solid #F4F2EF',
+    alignItems: 'flex-start',
+  },
+  badge: {
+    fontSize: 10,
+    fontWeight: 600,
+    padding: '2px 7px',
+    borderRadius: 99,
+    letterSpacing: '0.03em',
+  },
+  notionBtn: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 6,
+    padding: '8px 16px',
+    background: '#F4F2EF',
+    border: 'none',
+    borderRadius: 8,
+    fontSize: 13,
+    fontWeight: 600,
+    color: '#2A2A2A',
+    textDecoration: 'none',
+    cursor: 'pointer',
+  },
 };
 
-const card = (extra = {}) => ({
-  background: C.surface,
-  border: `1px solid ${C.border}`,
-  borderRadius: 16,
-  padding: '20px 22px',
-  ...extra,
-});
+// ─── SUB-COMPONENTS ─────────────────────────────────────────────────────────
 
-const sectionLabel = {
-  fontSize: 11,
-  fontWeight: 700,
-  color: C.muted,
-  textTransform: 'uppercase',
-  letterSpacing: 1.5,
-  marginBottom: 14,
-};
-
-function Tag({ color, children }) {
+function Label({ emoji, children }) {
   return (
-    <span style={{
-      fontSize: 10, fontWeight: 700, padding: '2px 8px',
-      borderRadius: 99, background: color + '20', color,
-      letterSpacing: 0.5, textTransform: 'uppercase',
-    }}>{children}</span>
+    <div style={S.sectionLabel}>
+      {emoji && <span style={{ fontSize: 12 }}>{emoji}</span>}
+      {children}
+    </div>
   );
 }
 
-function TaskDot({ status }) {
-  const colors = { done: C.green, 'in-progress': C.amber, urgent: C.red };
+function Card({ children, style = {} }) {
+  return <div style={{ ...S.card, ...style }}>{children}</div>;
+}
+
+function StatusBadge({ status }) {
+  const map = {
+    'To Do': { bg: '#FEF3C7', color: '#92400E' },
+    'In Progress': { bg: '#DBEAFE', color: '#1E40AF' },
+    Done: { bg: '#D1FAE5', color: '#065F46' },
+  };
+  const s = map[status] || { bg: '#F3F4F6', color: '#6B7280' };
   return (
-    <span style={{
-      width: 8, height: 8, borderRadius: '50%',
-      background: colors[status] || C.muted,
-      display: 'inline-block', flexShrink: 0,
-      marginTop: 4,
-    }} />
+    <span style={{ ...S.badge, background: s.bg, color: s.color }}>
+      {status}
+    </span>
   );
 }
 
-export default function Dashboard() {
-  const [market, setMarket] = useState([]);
-  const [news, setNews] = useState({ events: [], crypto: [], business: [] });
-  const [habits, setHabits] = useState({});
-  const [events, setEvents] = useState([]);
-  const [tasks, setTasks] = useState([]);
-  const [brief, setBrief] = useState('');
-  const [briefLoading, setBriefLoading] = useState(false);
-  const [briefOpen, setBriefOpen] = useState(false);
-  const [chatHistory, setChatHistory] = useState([]);
-  const [chatInput, setChatInput] = useState('');
-  const [chatLoading, setChatLoading] = useState(false);
-  const today = new Date().toDateString();
-  const doneCount = HABITS.filter(h => habits[h.id]).length;
-
-  useEffect(() => {
-    fetch('/api/market').then(r => r.json()).then(setMarket).catch(() => {});
-    fetch('/api/news').then(r => r.json()).then(setNews).catch(() => {});
-    fetch('/api/gcal').then(r => r.json()).then(d => setEvents(d.events || [])).catch(() => {});
-    fetch('/api/notion?type=tasks').then(r => r.json()).then(d => setTasks(d.tasks || [])).catch(() => {});
-    const saved = localStorage.getItem('habits_' + today);
-    if (saved) setHabits(JSON.parse(saved));
-  }, []);
-
-  const toggleHabit = (id) => {
-    const updated = { ...habits, [id]: !habits[id] };
-    setHabits(updated);
-    localStorage.setItem('habits_' + today, JSON.stringify(updated));
-  };
-
-  const generateBrief = async () => {
-    setBriefLoading(true);
-    setBriefOpen(true);
-    const mktCtx = market.map(m => `${m.ticker} $${m.price} (${m.changePct >= 0 ? '+' : ''}${m.changePct}%)`).join(', ');
-    const newsCtx = [...(news.crypto || []).slice(0, 3), ...(news.events || []).slice(0, 2)].map(n => n.title).join('; ');
-    const messages = [{
-      role: 'user',
-      content: `Markets: ${mktCtx}\nCrypto & news headlines: ${newsCtx}\n\nGive me a sharp morning brief focused on XRP, Bitcoin, and top market movers. What should I watch, buy, hold, or avoid today? Be concise and actionable — 4-6 bullet points max.`
-    }];
-    try {
-      const res = await fetch('/api/chat', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages }),
-      });
-      const data = await res.json();
-      setBrief(data.reply || data.message || 'Could not generate brief.');
-    } catch { setBrief('Error generating brief. Check your ANTHROPIC_API_KEY in Vercel.'); }
-    setBriefLoading(false);
-  };
-
-  const sendChat = async () => {
-    if (!chatInput.trim()) return;
-    const msg = chatInput.trim();
-    setChatInput('');
-    const newHistory = [...chatHistory, { role: 'user', content: msg }];
-    setChatHistory(newHistory);
-    setChatLoading(true);
-    try {
-      const res = await fetch('/api/chat', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: newHistory }),
-      });
-      const data = await res.json();
-      setChatHistory([...newHistory, { role: 'assistant', content: data.reply || data.message }]);
-    } catch { setChatHistory([...newHistory, { role: 'assistant', content: 'Error — check API key.' }]); }
-    setChatLoading(false);
-  };
-
-  const formatTime = (iso) => {
-    if (!iso) return '';
-    const d = new Date(iso);
-    return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-  };
-
-  const todayEvents = events.filter(e => {
-    const start = new Date(e.start);
-    const now = new Date();
-    return start.toDateString() === now.toDateString();
-  }).sort((a, b) => new Date(a.start) - new Date(b.start));
-
-  const activeTasks = tasks.filter(t => t.status !== 'done').slice(0, 8);
-
+// ── Calendar ──
+function CalendarSection({ events = [], connected }) {
+  if (!events.length) {
+    return (
+      <div
+        style={{
+          textAlign: 'center',
+          padding: '28px 0',
+          color: '#B0A8A0',
+        }}
+      >
+        <div style={{ fontSize: 30, marginBottom: 8 }}>🎉</div>
+        <div style={{ fontSize: 14, fontWeight: 600, color: '#6B6560' }}>
+          Free day — no events scheduled
+        </div>
+        {!connected && (
+          <div style={{ fontSize: 12, marginTop: 6 }}>
+            Google Calendar not yet connected
+          </div>
+        )}
+      </div>
+    );
+  }
   return (
-    <div style={{ minHeight: '100vh', background: C.bg, color: C.text, fontFamily: "'Inter', system-ui, sans-serif" }}>
-
-      {/* HEADER */}
-      <div style={{
-        background: 'linear-gradient(135deg, #0f0f1a 0%, #12152a 50%, #0a1628 100%)',
-        borderBottom: `1px solid ${C.border}`,
-        padding: '22px 36px',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      }}>
-        <div>
-          <h1 style={{
-            margin: 0, fontSize: 22, fontWeight: 700,
-            background: 'linear-gradient(90deg, #a78bfa, #60a5fa, #4ade80)',
-            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-          }}>
-            Hey Tiff 👋
-          </h1>
-          <p style={{ margin: '4px 0 0', fontSize: 13, color: C.muted }}>
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-            {' · '}{doneCount}/{HABITS.length} habits · {activeTasks.length} tasks remaining
-          </p>
-        </div>
-        <button onClick={generateBrief} disabled={briefLoading} style={{
-          background: 'linear-gradient(135deg, #7c3aed, #2563eb)',
-          color: '#fff', border: 'none', borderRadius: 10, padding: '10px 20px',
-          fontWeight: 600, fontSize: 13, cursor: 'pointer',
-        }}>
-          {briefLoading ? '⏳ Generating...' : '🤖 AI Morning Brief'}
-        </button>
-      </div>
-
-      {/* AI BRIEF (expandable) */}
-      {briefOpen && (
-        <div style={{
-          margin: '0 36px', marginTop: 16,
-          background: 'rgba(167,139,250,0.06)',
-          border: `1px solid ${C.borderAccent}`,
-          borderRadius: 14, padding: '16px 20px',
-          fontSize: 13.5, lineHeight: 1.75, color: C.text,
-          whiteSpace: 'pre-wrap',
-        }}>
-          {briefLoading
-            ? <span style={{ color: C.muted }}>✨ Analyzing markets and crypto for you...</span>
-            : brief}
-        </div>
-      )}
-
-      {/* MAIN GRID */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 0, padding: '20px 36px 36px', gap: 20 }}>
-
-        {/* LEFT COLUMN */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-
-          {/* TASKS */}
-          <div style={card()}>
-            <div style={sectionLabel}>📋 Today's Tasks</div>
-            {activeTasks.length === 0 ? (
-              <p style={{ color: C.muted, fontSize: 13, margin: 0 }}>
-                {tasks.length === 0 ? 'Syncing from Notion...' : '🎉 All caught up! No open tasks.'}
-              </p>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {activeTasks.map((t, i) => (
-                  <div key={i} style={{
-                    display: 'flex', alignItems: 'flex-start', gap: 10,
-                    padding: '10px 14px', borderRadius: 10,
-                    background: 'rgba(255,255,255,0.03)',
-                    border: `1px solid ${C.border}`,
-                  }}>
-                    <TaskDot status={t.status} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13.5, fontWeight: 500, color: C.text, lineHeight: 1.4 }}>{t.name || t.title}</div>
-                      {t.dueDate && (
-                        <div style={{ fontSize: 11, color: C.muted, marginTop: 3 }}>
-                          Due {new Date(t.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                        </div>
-                      )}
-                    </div>
-                    {t.status && <Tag color={t.status === 'urgent' ? C.red : t.status === 'in-progress' ? C.amber : C.blue}>{t.status}</Tag>}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* CALENDAR */}
-          <div style={card()}>
-            <div style={sectionLabel}>📅 Today's Calendar</div>
-            {todayEvents.length === 0 ? (
-              <p style={{ color: C.muted, fontSize: 13, margin: 0 }}>
-                {events.length === 0 && events.connected === false
-                  ? 'Connect Google Calendar in Vercel env vars.'
-                  : 'No events today — free day 🎉'}
-              </p>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {todayEvents.map((e, i) => (
-                  <div key={i} style={{
-                    display: 'flex', alignItems: 'center', gap: 14,
-                    padding: '10px 14px', borderRadius: 10,
-                    background: 'rgba(96,165,250,0.06)',
-                    border: '1px solid rgba(96,165,250,0.15)',
-                  }}>
-                    <div style={{ textAlign: 'center', minWidth: 52 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: C.blue }}>{formatTime(e.start)}</div>
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13.5, fontWeight: 500, color: C.text }}>{e.title || e.summary}</div>
-                      {e.location && <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{e.location}</div>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* MARKET */}
-          <div style={card()}>
-            <div style={sectionLabel}>📊 Market Pulse</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-              {market.length === 0 ? (
-                <p style={{ color: C.muted, fontSize: 13, gridColumn: '1/-1', margin: 0 }}>Loading market data...</p>
-              ) : market.map(m => {
-                const pos = parseFloat(m.changePct) >= 0;
-                return (
-                  <div key={m.ticker} style={{
-                    background: 'rgba(255,255,255,0.03)', border: `1px solid ${C.border}`,
-                    borderRadius: 12, padding: '12px 14px',
-                  }}>
-                    <div style={{ fontSize: 11, color: C.muted, fontWeight: 600, letterSpacing: 0.5 }}>{m.ticker}</div>
-                    <div style={{ fontSize: 18, fontWeight: 700, color: C.text, margin: '4px 0 2px' }}>${parseFloat(m.price).toLocaleString()}</div>
-                    <div style={{ fontSize: 12, color: pos ? C.green : C.red, fontWeight: 600 }}>
-                      {pos ? '▲' : '▼'} {Math.abs(m.changePct)}%
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* NEWS */}
-          <div style={card()}>
-            <div style={sectionLabel}>📰 News Feed</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
-              {[
-                { key: 'events', label: '🌍 World', color: C.blue },
-                { key: 'crypto', label: '₿ Crypto', color: C.amber },
-                { key: 'business', label: '💼 Business', color: C.green },
-              ].map(({ key, label, color }) => (
-                <div key={key}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color, marginBottom: 10, letterSpacing: 0.5 }}>{label}</div>
-                  {(news[key] || []).map((n, i) => (
-                    <div key={i} style={{ marginBottom: 10, paddingBottom: 10, borderBottom: `1px solid ${C.border}` }}>
-                      <a href={n.link} target="_blank" rel="noreferrer" style={{
-                        color: C.dim, textDecoration: 'none', fontSize: 12.5,
-                        lineHeight: 1.5, display: 'block',
-                        transition: 'color 0.2s',
-                      }}
-                        onMouseEnter={e => e.target.style.color = color}
-                        onMouseLeave={e => e.target.style.color = C.dim}
-                      >{n.title}</a>
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* RIGHT SIDEBAR */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-
-          {/* HABITS */}
-          <div style={card()}>
-            <div style={sectionLabel}>✅ Daily Habits</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {HABITS.map(h => {
-                const done = !!habits[h.id];
-                return (
-                  <button key={h.id} onClick={() => toggleHabit(h.id)} style={{
-                    display: 'flex', alignItems: 'center', gap: 12,
-                    padding: '11px 14px', borderRadius: 10, width: '100%',
-                    border: done ? '1px solid rgba(74,222,128,0.3)' : `1px solid ${C.border}`,
-                    background: done ? 'rgba(74,222,128,0.08)' : 'rgba(255,255,255,0.03)',
-                    cursor: 'pointer', transition: 'all 0.2s',
-                  }}>
-                    <div style={{
-                      width: 18, height: 18, borderRadius: '50%', flexShrink: 0,
-                      border: done ? '2px solid #4ade80' : '2px solid rgba(255,255,255,0.2)',
-                      background: done ? '#4ade80' : 'transparent',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      {done && <span style={{ fontSize: 9, color: '#0a0a0a', fontWeight: 900 }}>✓</span>}
-                    </div>
-                    <span style={{ fontSize: 13, color: done ? C.green : C.dim, textDecoration: done ? 'line-through' : 'none' }}>
-                      {h.label}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-            <div style={{
-              marginTop: 12, fontSize: 11.5, color: C.muted, textAlign: 'center',
-              padding: '8px', background: 'rgba(255,255,255,0.02)', borderRadius: 8,
-            }}>
-              {doneCount === HABITS.length ? '🎉 All done today!' : `${doneCount}/${HABITS.length} habits complete`}
-            </div>
-          </div>
-
-          {/* AI CONTENT STUDIO */}
-          <div style={{ ...card(), flex: 1 }}>
-            <div style={sectionLabel}>🎙️ Content Studio</div>
-            <div style={{ fontSize: 11.5, color: C.muted, marginBottom: 12 }}>
-              Hooks, captions & scripts for tunedinwithtiff
-            </div>
-            <div style={{
-              background: 'rgba(0,0,0,0.2)', borderRadius: 10, padding: 12,
-              minHeight: 160, maxHeight: 280, overflowY: 'auto', marginBottom: 10,
-            }}>
-              {chatHistory.length === 0 && (
-                <div style={{ color: 'rgba(148,163,184,0.4)', fontSize: 12, textAlign: 'center', paddingTop: 40 }}>
-                  Ask for a hook, caption, or script idea...
-                </div>
-              )}
-              {chatHistory.map((m, i) => (
-                <div key={i} style={{
-                  marginBottom: 10, padding: '8px 12px', borderRadius: 8,
-                  background: m.role === 'user' ? 'rgba(124,58,237,0.2)' : 'rgba(255,255,255,0.05)',
-                  fontSize: 12.5, lineHeight: 1.6, color: C.text,
-                }}>
-                  <span style={{ color: m.role === 'user' ? C.purple : C.blue, fontWeight: 700, fontSize: 11 }}>
-                    {m.role === 'user' ? 'You' : 'AI'}:{' '}
-                  </span>
-                  {m.content}
-                </div>
-              ))}
-              {chatLoading && (
-                <div style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', fontSize: 12, color: C.muted }}>
-                  ✍️ Writing...
-                </div>
-              )}
-            </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <input
-                value={chatInput}
-                onChange={e => setChatInput(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && sendChat()}
-                placeholder="Write a hook for my morning routine..."
-                style={{
-                  flex: 1, background: 'rgba(255,255,255,0.06)',
-                  border: `1px solid ${C.border}`, borderRadius: 8,
-                  padding: '9px 12px', color: C.text, fontSize: 12.5, outline: 'none',
-                }}
-              />
-              <button onClick={sendChat} disabled={chatLoading} style={{
-                background: 'linear-gradient(135deg, #7c3aed, #2563eb)',
-                color: '#fff', border: 'none', borderRadius: 8,
-                padding: '9px 14px', fontWeight: 600, fontSize: 12, cursor: 'pointer',
-              }}>→</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* DOMAIN HUB */}
-      <div style={{ padding: '0 36px 40px', borderTop: `1px solid ${C.border}`, paddingTop: 28 }}>
-        <div style={sectionLabel}>🧠 Your Second Brain</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-          {DOMAINS.map(d => (
-            <a key={d.name} href={d.href} style={{
-              background: C.surface, border: `1px solid ${C.border}`,
-              borderRadius: 14, padding: '18px 16px',
-              textDecoration: 'none', color: 'inherit', display: 'block',
-              transition: 'all 0.2s',
+    <div>
+      {events.map((ev, i) => (
+        <div key={i} style={S.calRow}>
+          <div
+            style={{
+              width: 3,
+              minHeight: 36,
+              borderRadius: 2,
+              background: '#7C3AED',
+              flexShrink: 0,
+              marginTop: 2,
             }}
-              onMouseEnter={e => { e.currentTarget.style.background = C.surfaceHover; e.currentTarget.style.borderColor = C.borderAccent; }}
-              onMouseLeave={e => { e.currentTarget.style.background = C.surface; e.currentTarget.style.borderColor = C.border; }}
+          />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div
+              style={{ fontSize: 13, fontWeight: 600, color: '#2A2A2A', lineHeight: 1.3 }}
             >
-              <div style={{ fontSize: 26, marginBottom: 10 }}>{d.emoji}</div>
-              <div style={{ fontWeight: 600, fontSize: 13.5, color: C.text }}>{d.name}</div>
-              <div style={{ fontSize: 12, color: C.muted, marginTop: 3 }}>{d.desc}</div>
+              {ev.summary || ev.title || 'Event'}
+            </div>
+            <div style={{ fontSize: 12, color: '#9B9590', marginTop: 3 }}>
+              {ev.start
+                ? `${formatTime(ev.start)}${ev.end ? ` → ${formatTime(ev.end)}` : ''}`
+                : 'All day'}
+              {ev.location ? ` · ${ev.location}` : ''}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Tasks ──
+function TaskList({ tasks = [], onToggle }) {
+  const pending = tasks.filter((t) => !t.done);
+  if (!pending.length) {
+    return (
+      <div
+        style={{
+          textAlign: 'center',
+          padding: '28px 0',
+          color: '#B0A8A0',
+          fontSize: 14,
+        }}
+      >
+        All caught up! 🎉
+      </div>
+    );
+  }
+  return (
+    <div>
+      {pending.slice(0, 7).map((t) => (
+        <div key={t.id} style={S.taskRow} onClick={() => onToggle(t.id)}>
+          <input
+            type="checkbox"
+            checked={!!t.done}
+            onChange={() => onToggle(t.id)}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              marginTop: 2,
+              width: 15,
+              height: 15,
+              accentColor: ACCENT,
+              cursor: 'pointer',
+              flexShrink: 0,
+            }}
+          />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div
+              style={{
+                fontSize: 13,
+                fontWeight: 500,
+                color: '#2A2A2A',
+                lineHeight: 1.4,
+              }}
+            >
+              {t.title}
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                gap: 6,
+                marginTop: 4,
+                alignItems: 'center',
+                flexWrap: 'wrap',
+              }}
+            >
+              {t.area && (
+                <span style={{ fontSize: 11, color: '#B0A8A0' }}>{t.area}</span>
+              )}
+              {t.status && <StatusBadge status={t.status} />}
+              {t.due && (
+                <span style={{ fontSize: 11, color: '#B0A8A0' }}>
+                  Due: {t.due}
+                </span>
+              )}
+            </div>
+          </div>
+          {t.notionUrl && (
+            <a
+              href={t.notionUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              style={{ fontSize: 13, color: '#C0BAB4', flexShrink: 0, textDecoration: 'none' }}
+            >
+              ↗
+            </a>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Domain Hub ──
+function DomainHub() {
+  return (
+    <Card>
+      <Label emoji="🗂️">Your 5 Domains</Label>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(5, 1fr)',
+          gap: 12,
+        }}
+      >
+        {DOMAINS.map((d) => (
+          <a
+            key={d.id}
+            href={d.notionUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              background: '#FAFAF8',
+              borderRadius: 12,
+              border: '1.5px solid #EBEBEB',
+              padding: '16px 14px',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+              textDecoration: 'none',
+              display: 'block',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = d.color;
+              e.currentTarget.style.background = '#fff';
+              e.currentTarget.style.boxShadow = `0 2px 12px ${d.color}18`;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = '#EBEBEB';
+              e.currentTarget.style.background = '#FAFAF8';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+          >
+            <div style={{ fontSize: 22, marginBottom: 8 }}>{d.emoji}</div>
+            <div
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                color: '#1A1A1A',
+                marginBottom: 4,
+                lineHeight: 1.3,
+              }}
+            >
+              {d.name}
+            </div>
+            <div
+              style={{
+                fontSize: 11,
+                color: '#B0A8A0',
+                lineHeight: 1.4,
+              }}
+            >
+              {d.desc}
+            </div>
+            <div
+              style={{
+                width: 20,
+                height: 2,
+                borderRadius: 2,
+                background: d.color,
+                marginTop: 10,
+              }}
+            />
+          </a>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+// ── Morning Brief (News) ──
+function MorningBrief({ news = {}, loading }) {
+  const [tab, setTab] = useState('ai');
+
+  const tabs = [
+    { id: 'ai', label: '🤖 AI & Tech', items: news.ai || [] },
+    { id: 'marketing', label: '📣 Marketing', items: news.marketing || [] },
+    { id: 'world', label: '🌍 World', items: news.world || [] },
+  ];
+  const active = tabs.find((t) => t.id === tab) || tabs[0];
+
+  return (
+    <Card>
+      <Label emoji="📰">Morning Brief</Label>
+      {/* Tabs */}
+      <div
+        style={{
+          display: 'flex',
+          gap: 4,
+          marginBottom: 14,
+          background: '#F4F2EF',
+          borderRadius: 9,
+          padding: 4,
+        }}
+      >
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            style={{
+              flex: 1,
+              padding: '6px 8px',
+              border: 'none',
+              borderRadius: 6,
+              fontSize: 11,
+              fontWeight: 700,
+              cursor: 'pointer',
+              background: tab === t.id ? '#fff' : 'transparent',
+              color: tab === t.id ? '#1A1A1A' : '#9B9590',
+              boxShadow: tab === t.id ? '0 1px 3px rgba(0,0,0,0.07)' : 'none',
+              transition: 'all 0.13s',
+              letterSpacing: '0.02em',
+            }}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <div
+          style={{
+            textAlign: 'center',
+            padding: '28px 0',
+            color: '#B0A8A0',
+            fontSize: 13,
+          }}
+        >
+          Loading brief…
+        </div>
+      ) : active.items.length === 0 ? (
+        <div
+          style={{
+            textAlign: 'center',
+            padding: '28px 0',
+            color: '#B0A8A0',
+            fontSize: 13,
+          }}
+        >
+          No stories available right now
+        </div>
+      ) : (
+        <div>
+          {active.items.slice(0, 5).map((item, i) => (
+            <a
+              key={i}
+              href={item.url || '#'}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={S.newsRow}
+            >
+              <div style={S.newsTitle}>{item.title}</div>
+              <div style={S.newsSource}>
+                {item.source}
+                {item.published
+                  ? ` · ${new Date(item.published).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                    })}`
+                  : ''}
+              </div>
             </a>
           ))}
         </div>
+      )}
+    </Card>
+  );
+}
+
+// ── AI Chat ──
+function AIChatInterface() {
+  const [messages, setMessages] = useState([
+    {
+      role: 'assistant',
+      text: "Hey Tiff! I'm your second brain assistant. Ask me about your tasks, domains, what to focus on — or just think out loud.",
+    },
+  ]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const bottomRef = useRef(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  async function send() {
+    const text = input.trim();
+    if (!text || loading) return;
+    setInput('');
+    setMessages((m) => [...m, { role: 'user', text }]);
+    setLoading(true);
+    try {
+      const r = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text }),
+      });
+      const d = await r.json();
+      setMessages((m) => [
+        ...m,
+        { role: 'assistant', text: d.reply || d.message || 'Got it!' },
+      ]);
+    } catch {
+      setMessages((m) => [
+        ...m,
+        {
+          role: 'assistant',
+          text: "Something went wrong. Check your API key or try again.",
+        },
+      ]);
+    }
+    setLoading(false);
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      send();
+    }
+  }
+
+  return (
+    <Card style={{ display: 'flex', flexDirection: 'column', height: 420 }}>
+      <Label emoji="🧠">Ask Your Second Brain</Label>
+      {/* Messages */}
+      <div
+        style={{
+          flex: 1,
+          overflowY: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 10,
+          marginBottom: 14,
+          paddingRight: 2,
+        }}
+      >
+        {messages.map((m, i) => (
+          <div
+            key={i}
+            style={{
+              display: 'flex',
+              justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start',
+            }}
+          >
+            <div
+              style={{
+                ...S.chatBubble,
+                background: m.role === 'user' ? ACCENT : '#F4F2EF',
+                color: m.role === 'user' ? '#fff' : '#2A2A2A',
+              }}
+            >
+              {m.text}
+            </div>
+          </div>
+        ))}
+        {loading && (
+          <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+            <div
+              style={{
+                ...S.chatBubble,
+                background: '#F4F2EF',
+                color: '#9B9590',
+              }}
+            >
+              Thinking…
+            </div>
+          </div>
+        )}
+        <div ref={bottomRef} />
       </div>
+      {/* Input */}
+      <div style={{ display: 'flex', gap: 8 }}>
+        <input
+          style={S.input}
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKey}
+          placeholder="Ask anything — tasks, priorities, ideas…"
+        />
+        <button style={S.sendBtn} onClick={send}>
+          ↑
+        </button>
+      </div>
+    </Card>
+  );
+}
+
+// ── Habit Tracker ──
+function HabitTracker({ habits, checked, onToggle }) {
+  const count = checked.size;
+  const pct = Math.round((count / habits.length) * 100);
+  return (
+    <Card>
+      <Label emoji="✅">Daily Habits · {count}/{habits.length}</Label>
+      {/* Progress bar */}
+      <div
+        style={{
+          height: 4,
+          background: '#F4F2EF',
+          borderRadius: 2,
+          marginBottom: 14,
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          style={{
+            height: '100%',
+            width: `${pct}%`,
+            background: '#10B981',
+            borderRadius: 2,
+            transition: 'width 0.3s ease',
+          }}
+        />
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {habits.map((h) => (
+          <label
+            key={h.id}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              cursor: 'pointer',
+              userSelect: 'none',
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={checked.has(h.id)}
+              onChange={() => onToggle(h.id)}
+              style={{
+                width: 16,
+                height: 16,
+                accentColor: '#10B981',
+                cursor: 'pointer',
+              }}
+            />
+            <span
+              style={{
+                fontSize: 13,
+                color: checked.has(h.id) ? '#B0A8A0' : '#2A2A2A',
+                textDecoration: checked.has(h.id) ? 'line-through' : 'none',
+                transition: 'all 0.15s',
+              }}
+            >
+              {h.emoji} {h.label}
+            </span>
+          </label>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+// ── Market Pulse ──
+function MarketPulse({ data = [] }) {
+  // Filter out heavy crypto, focus on equities
+  const stocks = data.filter(
+    (d) => !['BTC-USD', 'XRP-USD', 'ETH-USD'].includes(d.ticker)
+  );
+  if (!stocks.length) return null;
+
+  return (
+    <Card>
+      <Label emoji="📊">Market Pulse</Label>
+      <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
+        {stocks.slice(0, 5).map((s) => {
+          const up = parseFloat(s.changePct) >= 0;
+          return (
+            <div key={s.ticker} style={{ flex: '1 1 70px' }}>
+              <div
+                style={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  color: '#9B9590',
+                  letterSpacing: '0.06em',
+                  marginBottom: 2,
+                }}
+              >
+                {s.ticker}
+              </div>
+              <div
+                style={{
+                  fontSize: 17,
+                  fontWeight: 700,
+                  color: '#1A1A1A',
+                  letterSpacing: '-0.5px',
+                }}
+              >
+                ${Number(s.price).toFixed(2)}
+              </div>
+              <div
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: up ? '#059669' : '#DC2626',
+                  marginTop: 2,
+                }}
+              >
+                {up ? '▲' : '▼'} {Math.abs(parseFloat(s.changePct)).toFixed(2)}%
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </Card>
+  );
+}
+
+// ─── MAIN DASHBOARD ─────────────────────────────────────────────────────────
+export default function Dashboard() {
+  const [tasks, setTasks] = useState([]);
+  const [cal, setCal] = useState({ events: [], connected: false });
+  const [news, setNews] = useState({});
+  const [market, setMarket] = useState([]);
+  const [habits, setHabits] = useState(new Set());
+  const [tasksDone, setTasksDone] = useState(new Set());
+  const [newsLoading, setNewsLoading] = useState(true);
+
+  const now = new Date();
+  const dateKey = now.toDateString();
+
+  useEffect(() => {
+    // Restore habits
+    try {
+      const saved = JSON.parse(
+        localStorage.getItem(`tiff_habits_${dateKey}`) || '[]'
+      );
+      setHabits(new Set(saved));
+    } catch {}
+
+    // Fetch all data
+    fetch('/api/notion')
+      .then((r) => r.json())
+      .then((d) => setTasks(d.tasks || []))
+      .catch(() => {});
+
+    fetch('/api/gcal')
+      .then((r) => r.json())
+      .then((d) => setCal(d))
+      .catch(() => {});
+
+    fetch('/api/market')
+      .then((r) => r.json())
+      .then((d) => setMarket(Array.isArray(d) ? d : []))
+      .catch(() => {});
+
+    setNewsLoading(true);
+    fetch('/api/news')
+      .then((r) => r.json())
+      .then((d) => {
+        setNews(d);
+        setNewsLoading(false);
+      })
+      .catch(() => setNewsLoading(false));
+  }, []);
+
+  function toggleHabit(id) {
+    setHabits((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      try {
+        localStorage.setItem(`tiff_habits_${dateKey}`, JSON.stringify([...next]));
+      } catch {}
+      return next;
+    });
+  }
+
+  function toggleTask(id) {
+    setTasksDone((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
+
+  // Merge local done state with API data
+  const mergedTasks = tasks.map((t) => ({
+    ...t,
+    done: tasksDone.has(t.id) || t.done,
+  }));
+  const pendingCount = mergedTasks.filter((t) => !t.done).length;
+
+  return (
+    <div style={S.root}>
+      {/* ── Header ─────────────────────────────── */}
+      <header style={S.header}>
+        <div>
+          <div style={S.greeting}>
+            {getGreeting()}, Tiff 👋
+          </div>
+          <div style={S.date}>
+            {formatDate(now)} · {habits.size}/{HABITS.length} habits ·{' '}
+            {pendingCount} task{pendingCount !== 1 ? 's' : ''} remaining
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <a
+            href="https://www.notion.so/32583fbef7cf81cf9930eaa9505e476e"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={S.notionBtn}
+          >
+            Notion ↗
+          </a>
+        </div>
+      </header>
+
+      <main style={S.main}>
+        {/* ── Domain Hub ─────────────────────────── */}
+        <DomainHub />
+
+        {/* ── Today: Calendar + Tasks ────────────── */}
+        <div style={S.grid2}>
+          <Card>
+            <Label emoji="📅">Today's Calendar</Label>
+            <CalendarSection events={cal.events} connected={cal.connected} />
+          </Card>
+          <Card>
+            <Label emoji="✅">
+              Tasks · {pendingCount} remaining
+            </Label>
+            <TaskList tasks={mergedTasks} onToggle={toggleTask} />
+          </Card>
+        </div>
+
+        {/* ── Morning Brief + Chat ────────────────── */}
+        <div style={S.grid2}>
+          <MorningBrief news={news} loading={newsLoading} />
+          <AIChatInterface />
+        </div>
+
+        {/* ── Habits + Market ────────────────────── */}
+        <div style={S.grid2}>
+          <HabitTracker habits={HABITS} checked={habits} onToggle={toggleHabit} />
+          <MarketPulse data={market} />
+        </div>
+      </main>
     </div>
   );
 }
