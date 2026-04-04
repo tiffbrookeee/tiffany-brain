@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect } from 'react';
-import SecondBrain from './SecondBrain';
 
 const HABITS = [
   { id: 'walk', label: '🚶 Morning Walk' },
@@ -10,7 +9,7 @@ const HABITS = [
 ];
 
 const DOMAINS = [
-  { name: 'Tuned In With Tiff', desc: 'Content & Brand', emoji: '🎙️', href: '/domains' },
+  { name: 'Tuned In With Tiff', desc: 'Content & Brand', emoji: '😙️', href: '/domains' },
   { name: 'VND Media', desc: 'Agency & Clients', emoji: '📱', href: '/domains' },
   { name: 'Armor Insurance', desc: 'Insurance Business', emoji: '🛡️', href: '/domains' },
   { name: 'YPO', desc: 'Leadership & Mentorship', emoji: '🌐', href: '/domains' },
@@ -20,47 +19,81 @@ const DOMAINS = [
   { name: 'Learning', desc: 'Books & Growth', emoji: '📚', href: '/domains' },
 ];
 
-const S = {
-  page: { minHeight: '100vh', background: '#0a0a0a', color: '#fff', fontFamily: 'system-ui, sans-serif' },
-  header: { background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)', padding: '24px 32px', borderBottom: '1px solid #ffffff15' },
-  headerTitle: { fontSize: 28, fontWeight: 700, margin: 0, background: 'linear-gradient(90deg, #a78bfa, #60a5fa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' },
-  headerSub: { fontSize: 13, color: '#94a3b8', marginTop: 4 },
-  section: { padding: '24px 32px' },
-  sectionTitle: { fontSize: 14, fontWeight: 600, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 },
-  grid3: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 },
-  card: { background: '#ffffff08', border: '1px solid #ffffff10', borderRadius: 12, padding: 16 },
-  ticker: { display: 'flex', flexDirection: 'column', gap: 2 },
-  tickerName: { fontSize: 11, color: '#94a3b8' },
-  tickerPrice: { fontSize: 18, fontWeight: 700 },
-  tickerChange: (pos) => ({ fontSize: 12, color: pos ? '#4ade80' : '#f87171' }),
-  habitBtn: (done) => ({ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', borderRadius: 10, border: done ? '1px solid #4ade8040' : '1px solid #ffffff10', background: done ? '#4ade8015' : '#ffffff05', cursor: 'pointer', transition: 'all 0.2s', width: '100%' }),
-  habitCheck: (done) => ({ width: 20, height: 20, borderRadius: '50%', border: done ? '2px solid #4ade80' : '2px solid #ffffff30', background: done ? '#4ade80' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }),
-  btn: { padding: '10px 20px', borderRadius: 8, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13 },
-  primaryBtn: { background: 'linear-gradient(135deg, #7c3aed, #2563eb)', color: '#fff' },
-  newsItem: { padding: '8px 0', borderBottom: '1px solid #ffffff08', fontSize: 13 },
-  newsLink: { color: '#a78bfa', textDecoration: 'none', lineHeight: 1.4, display: 'block' },
-  chatBox: { background: '#ffffff05', borderRadius: 10, padding: 16, minHeight: 200, maxHeight: 350, overflowY: 'auto', marginBottom: 12 },
-  chatMsg: (role) => ({ marginBottom: 12, padding: '10px 14px', borderRadius: 8, background: role === 'user' ? '#7c3aed30' : '#ffffff08', fontSize: 13, lineHeight: 1.6 }),
-  inputRow: { display: 'flex', gap: 8 },
-  input: { flex: 1, background: '#ffffff08', border: '1px solid #ffffff15', borderRadius: 8, padding: '10px 14px', color: '#fff', fontSize: 13, outline: 'none' },
-  domainCard: { background: '#ffffff08', border: '1px solid #ffffff10', borderRadius: 12, padding: 16, cursor: 'pointer', textDecoration: 'none', color: 'inherit', display: 'block', transition: 'background 0.2s' },
-  briefBox: { background: '#ffffff05', border: '1px solid #a78bfa30', borderRadius: 10, padding: 16, marginTop: 12, fontSize: 13, lineHeight: 1.7, whiteSpace: 'pre-wrap' },
+const C = {
+  bg: '#080810',
+  surface: 'rgba(255,255,255,0.04)',
+  surfaceHover: 'rgba(255,255,255,0.07)',
+  border: 'rgba(255,255,255,0.07)',
+  borderAccent: 'rgba(167,139,250,0.25)',
+  text: '#e2e8f0',
+  muted: '#64748b',
+  dim: '#94a3b8',
+  purple: '#a78bfa',
+  blue: '#60a5fa',
+  green: '#4ade80',
+  red: '#f87171',
+  amber: '#fbbf24',
 };
+
+const card = (extra = {}) => ({
+  background: C.surface,
+  border: `1px solid ${C.border}`,
+  borderRadius: 16,
+  padding: '20px 22px',
+  ...extra,
+});
+
+const sectionLabel = {
+  fontSize: 11,
+  fontWeight: 700,
+  color: C.muted,
+  textTransform: 'uppercase',
+  letterSpacing: 1.5,
+  marginBottom: 14,
+};
+
+function Tag({ color, children }) {
+  return (
+    <span style={{
+      fontSize: 10, fontWeight: 700, padding: '2px 8px',
+      borderRadius: 99, background: color + '20', color,
+      letterSpacing: 0.5, textTransform: 'uppercase',
+    }}>{children}</span>
+  );
+}
+
+function TaskDot({ status }) {
+  const colors = { done: C.green, 'in-progress': C.amber, urgent: C.red };
+  return (
+    <span style={{
+      width: 8, height: 8, borderRadius: '50%',
+      background: colors[status] || C.muted,
+      display: 'inline-block', flexShrink: 0,
+      marginTop: 4,
+    }} />
+  );
+}
 
 export default function Dashboard() {
   const [market, setMarket] = useState([]);
-  const [news, setNews] = useState({ events: [], ai: [], business: [] });
+  const [news, setNews] = useState({ events: [], crypto: [], business: [] });
   const [habits, setHabits] = useState({});
+  const [events, setEvents] = useState([]);
+  const [tasks, setTasks] = useState([]);
   const [brief, setBrief] = useState('');
   const [briefLoading, setBriefLoading] = useState(false);
+  const [briefOpen, setBriefOpen] = useState(false);
   const [chatHistory, setChatHistory] = useState([]);
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
   const today = new Date().toDateString();
+  const doneCount = HABITS.filter(h => habits[h.id]).length;
 
   useEffect(() => {
     fetch('/api/market').then(r => r.json()).then(setMarket).catch(() => {});
     fetch('/api/news').then(r => r.json()).then(setNews).catch(() => {});
+    fetch('/api/gcal').then(r => r.json()).then(d => setEvents(d.events || [])).catch(() => {});
+    fetch('/api/notion?type=tasks').then(r => r.json()).then(d => setTasks(d.tasks || [])).catch(() => {});
     const saved = localStorage.getItem('habits_' + today);
     if (saved) setHabits(JSON.parse(saved));
   }, []);
@@ -73,135 +106,338 @@ export default function Dashboard() {
 
   const generateBrief = async () => {
     setBriefLoading(true);
-    const ctx = market.map(m => `${m.ticker}: $${m.price} (${m.change > 0 ? '+' : ''}${m.change}%)`).join(', ');
-    const newsCtx = [...(news.events || []).slice(0,2), ...(news.ai || []).slice(0,2), ...(news.business || []).slice(0,2)].map(n => n.title).join('; ');
-    const prompt = `Market: ${ctx}\nNews: ${newsCtx}\n\nGive me a sharp morning investor brief. What are the key moves to consider today? Be concise and actionable (buy/sell/hold insights).`;
-    const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: prompt, systemPrompt: 'You are a sharp AI investor assistant. Give concise, actionable morning briefs.' }) });
-    const data = await res.json();
-    setBrief(data.message);
+    setBriefOpen(true);
+    const mktCtx = market.map(m => `${m.ticker} $${m.price} (${m.changePct >= 0 ? '+' : ''}${m.changePct}%)`).join(', ');
+    const newsCtx = [...(news.crypto || []).slice(0, 3), ...(news.events || []).slice(0, 2)].map(n => n.title).join('; ');
+    const messages = [{
+      role: 'user',
+      content: `Markets: ${mktCtx}\nCrypto & news headlines: ${newsCtx}\n\nGive me a sharp morning brief focused on XRP, Bitcoin, and top market movers. What should I watch, buy, hold, or avoid today? Be concise and actionable — 4-6 bullet points max.`
+    }];
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages }),
+      });
+      const data = await res.json();
+      setBrief(data.reply || data.message || 'Could not generate brief.');
+    } catch { setBrief('Error generating brief. Check your ANTHROPIC_API_KEY in Vercel.'); }
     setBriefLoading(false);
   };
 
   const sendChat = async () => {
     if (!chatInput.trim()) return;
-    const msg = chatInput;
+    const msg = chatInput.trim();
     setChatInput('');
     const newHistory = [...chatHistory, { role: 'user', content: msg }];
     setChatHistory(newHistory);
     setChatLoading(true);
-    const res = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: msg, history: chatHistory, systemPrompt: 'You are a creative content strategist for Tiffany, a lifestyle entrepreneur and content creator behind tunedinwithtiff. Help with hooks, captions, scripts, content ideas for Instagram, TikTok, and podcasts. Be punchy, creative, and on-brand.' }) });
-    const data = await res.json();
-    setChatHistory([...newHistory, { role: 'assistant', content: data.message }]);
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: newHistory }),
+      });
+      const data = await res.json();
+      setChatHistory([...newHistory, { role: 'assistant', content: data.reply || data.message }]);
+    } catch { setChatHistory([...newHistory, { role: 'assistant', content: 'Error — check API key.' }]); }
     setChatLoading(false);
   };
 
-  const doneCount = HABITS.filter(h => habits[h.id]).length;
+  const formatTime = (iso) => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  };
+
+  const todayEvents = events.filter(e => {
+    const start = new Date(e.start);
+    const now = new Date();
+    return start.toDateString() === now.toDateString();
+  }).sort((a, b) => new Date(a.start) - new Date(b.start));
+
+  const activeTasks = tasks.filter(t => t.status !== 'done').slice(0, 8);
 
   return (
-    <div style={S.page}>
-      <div style={S.header}>
-        <h1 style={S.headerTitle}>✨ Tiffany's Command Center</h1>
-        <p style={S.headerSub}>{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} · {doneCount}/{HABITS.length} habits done</p>
+    <div style={{ minHeight: '100vh', background: C.bg, color: C.text, fontFamily: "'Inter', system-ui, sans-serif" }}>
+
+      {/* HEADER */}
+      <div style={{
+        background: 'linear-gradient(135deg, #0f0f1a 0%, #12152a 50%, #0a1628 100%)',
+        borderBottom: `1px solid ${C.border}`,
+        padding: '22px 36px',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      }}>
+        <div>
+          <h1 style={{
+            margin: 0, fontSize: 22, fontWeight: 700,
+            background: 'linear-gradient(90deg, #a78bfa, #60a5fa, #4ade80)',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+          }}>
+            Hey Tiff 👋
+          </h1>
+          <p style={{ margin: '4px 0 0', fontSize: 13, color: C.muted }}>
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+            {' · '}{doneCount}/{HABITS.length} habits · {activeTasks.length} tasks remaining
+          </p>
+        </div>
+        <button onClick={generateBrief} disabled={briefLoading} style={{
+          background: 'linear-gradient(135deg, #7c3aed, #2563eb)',
+          color: '#fff', border: 'none', borderRadius: 10, padding: '10px 20px',
+          fontWeight: 600, fontSize: 13, cursor: 'pointer',
+        }}>
+          {briefLoading ? '⏳ Generating...' : '🤖 AI Morning Brief'}
+        </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 0 }}>
-        <div>
-          <div style={S.section}>
-            <div style={S.sectionTitle}>📊 Market Pulse</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 10, marginBottom: 16 }}>
-              {market.length === 0 && <div style={{ color: '#94a3b8', fontSize: 13, gridColumn: '1/-1' }}>Loading market data...</div>}
-              {market.map(m => (
-                <div key={m.ticker} style={{ ...S.card, ...S.ticker }}>
-                  <span style={S.tickerName}>{m.ticker}</span>
-                  <span style={S.tickerPrice}>${m.price?.toLocaleString()}</span>
-                  <span style={S.tickerChange(m.change >= 0)}>{m.change >= 0 ? '▲' : '▼'} {Math.abs(m.change)}%</span>
+      {/* AI BRIEF (expandable) */}
+      {briefOpen && (
+        <div style={{
+          margin: '0 36px', marginTop: 16,
+          background: 'rgba(167,139,250,0.06)',
+          border: `1px solid ${C.borderAccent}`,
+          borderRadius: 14, padding: '16px 20px',
+          fontSize: 13.5, lineHeight: 1.75, color: C.text,
+          whiteSpace: 'pre-wrap',
+        }}>
+          {briefLoading
+            ? <span style={{ color: C.muted }}>✨ Analyzing markets and crypto for you...</span>
+            : brief}
+        </div>
+      )}
+
+      {/* MAIN GRID */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 0, padding: '20px 36px 36px', gap: 20 }}>
+
+        {/* LEFT COLUMN */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+          {/* TASKS */}
+          <div style={card()}>
+            <div style={sectionLabel}>📋 Today's Tasks</div>
+            {activeTasks.length === 0 ? (
+              <p style={{ color: C.muted, fontSize: 13, margin: 0 }}>
+                {tasks.length === 0 ? 'Syncing from Notion...' : '🎉 All caught up! No open tasks.'}
+              </p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {activeTasks.map((t, i) => (
+                  <div key={i} style={{
+                    display: 'flex', alignItems: 'flex-start', gap: 10,
+                    padding: '10px 14px', borderRadius: 10,
+                    background: 'rgba(255,255,255,0.03)',
+                    border: `1px solid ${C.border}`,
+                  }}>
+                    <TaskDot status={t.status} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13.5, fontWeight: 500, color: C.text, lineHeight: 1.4 }}>{t.name || t.title}</div>
+                      {t.dueDate && (
+                        <div style={{ fontSize: 11, color: C.muted, marginTop: 3 }}>
+                          Due {new Date(t.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </div>
+                      )}
+                    </div>
+                    {t.status && <Tag color={t.status === 'urgent' ? C.red : t.status === 'in-progress' ? C.amber : C.blue}>{t.status}</Tag>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* CALENDAR */}
+          <div style={card()}>
+            <div style={sectionLabel}>📅 Today's Calendar</div>
+            {todayEvents.length === 0 ? (
+              <p style={{ color: C.muted, fontSize: 13, margin: 0 }}>
+                {events.length === 0 && events.connected === false
+                  ? 'Connect Google Calendar in Vercel env vars.'
+                  : 'No events today — free day 🎉'}
+              </p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {todayEvents.map((e, i) => (
+                  <div key={i} style={{
+                    display: 'flex', alignItems: 'center', gap: 14,
+                    padding: '10px 14px', borderRadius: 10,
+                    background: 'rgba(96,165,250,0.06)',
+                    border: '1px solid rgba(96,165,250,0.15)',
+                  }}>
+                    <div style={{ textAlign: 'center', minWidth: 52 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: C.blue }}>{formatTime(e.start)}</div>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13.5, fontWeight: 500, color: C.text }}>{e.title || e.summary}</div>
+                      {e.location && <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{e.location}</div>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* MARKET */}
+          <div style={card()}>
+            <div style={sectionLabel}>📊 Market Pulse</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+              {market.length === 0 ? (
+                <p style={{ color: C.muted, fontSize: 13, gridColumn: '1/-1', margin: 0 }}>Loading market data...</p>
+              ) : market.map(m => {
+                const pos = parseFloat(m.changePct) >= 0;
+                return (
+                  <div key={m.ticker} style={{
+                    background: 'rgba(255,255,255,0.03)', border: `1px solid ${C.border}`,
+                    borderRadius: 12, padding: '12px 14px',
+                  }}>
+                    <div style={{ fontSize: 11, color: C.muted, fontWeight: 600, letterSpacing: 0.5 }}>{m.ticker}</div>
+                    <div style={{ fontSize: 18, fontWeight: 700, color: C.text, margin: '4px 0 2px' }}>${parseFloat(m.price).toLocaleString()}</div>
+                    <div style={{ fontSize: 12, color: pos ? C.green : C.red, fontWeight: 600 }}>
+                      {pos ? '▲' : '▼'} {Math.abs(m.changePct)}%
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* NEWS */}
+          <div style={card()}>
+            <div style={sectionLabel}>📰 News Feed</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+              {[
+                { key: 'events', label: '🌍 World', color: C.blue },
+                { key: 'crypto', label: '₿ Crypto', color: C.amber },
+                { key: 'business', label: '💼 Business', color: C.green },
+              ].map(({ key, label, color }) => (
+                <div key={key}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color, marginBottom: 10, letterSpacing: 0.5 }}>{label}</div>
+                  {(news[key] || []).map((n, i) => (
+                    <div key={i} style={{ marginBottom: 10, paddingBottom: 10, borderBottom: `1px solid ${C.border}` }}>
+                      <a href={n.link} target="_blank" rel="noreferrer" style={{
+                        color: C.dim, textDecoration: 'none', fontSize: 12.5,
+                        lineHeight: 1.5, display: 'block',
+                        transition: 'color 0.2s',
+                      }}
+                        onMouseEnter={e => e.target.style.color = color}
+                        onMouseLeave={e => e.target.style.color = C.dim}
+                      >{n.title}</a>
+                    </div>
+                  ))}
                 </div>
               ))}
             </div>
-            <button onClick={generateBrief} disabled={briefLoading} style={{ ...S.btn, ...S.primaryBtn }}>
-              {briefLoading ? '⏳ Generating...' : '🤖 Generate AI Morning Brief'}
-            </button>
-            {brief && <div style={S.briefBox}>{brief}</div>}
-          </div>
-
-          <div style={S.section}>
-            <div style={S.sectionTitle}>📰 News Feed</div>
-            <div style={S.grid3}>
-              <div style={S.card}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#60a5fa', marginBottom: 8 }}>🌍 Current Events</div>
-                {(news.events || []).map((n, i) => (
-                  <div key={i} style={S.newsItem}><a href={n.link} target="_blank" rel="noreferrer" style={S.newsLink}>{n.title}</a></div>
-                ))}
-              </div>
-              <div style={S.card}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#a78bfa', marginBottom: 8 }}>🤖 AI & Tech</div>
-                {(news.ai || []).map((n, i) => (
-                  <div key={i} style={S.newsItem}><a href={n.link} target="_blank" rel="noreferrer" style={S.newsLink}>{n.title}</a></div>
-                ))}
-              </div>
-              <div style={S.card}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#4ade80', marginBottom: 8 }}>💼 Business & Marketing</div>
-                {(news.business || []).map((n, i) => (
-                  <div key={i} style={S.newsItem}><a href={n.link} target="_blank" rel="noreferrer" style={S.newsLink}>{n.title}</a></div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div style={S.section}>
-            <div style={S.sectionTitle}>🎨 AI Content Studio</div>
-            <div style={S.card}>
-              <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 12 }}>Chat with your AI content strategist — hooks, captions, scripts, ideas for tunedinwithtiff</div>
-              <div style={S.chatBox}>
-                {chatHistory.length === 0 && <div style={{ color: '#94a3b855', fontSize: 13, textAlign: 'center', paddingTop: 60 }}>Ask me to write a hook, caption, podcast script, or brainstorm content ideas...</div>}
-                {chatHistory.map((m, i) => (
-                  <div key={i} style={S.chatMsg(m.role)}>
-                    <strong style={{ color: m.role === 'user' ? '#a78bfa' : '#60a5fa' }}>{m.role === 'user' ? 'You' : 'AI'}: </strong>{m.content}
-                  </div>
-                ))}
-                {chatLoading && <div style={S.chatMsg('assistant')}><strong style={{ color: '#60a5fa' }}>AI: </strong>✍️ Writing...</div>}
-              </div>
-              <div style={S.inputRow}>
-                <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendChat()} placeholder="Write me a hook for my morning routine post..." style={S.input} />
-                <button onClick={sendChat} disabled={chatLoading} style={{ ...S.btn, ...S.primaryBtn }}>Send</button>
-              </div>
-            </div>
           </div>
         </div>
 
-        <div style={{ borderLeft: '1px solid #ffffff10' }}>
-          <div style={{ ...S.section, paddingLeft: 24 }}>
-            <div style={S.sectionTitle}>✅ Daily Habits</div>
+        {/* RIGHT SIDEBAR */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+          {/* HABITS */}
+          <div style={card()}>
+            <div style={sectionLabel}>✅ Daily Habits</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {HABITS.map(h => (
-                <button key={h.id} onClick={() => toggleHabit(h.id)} style={S.habitBtn(habits[h.id])}>
-                  <div style={S.habitCheck(habits[h.id])}>
-                    {habits[h.id] && <span style={{ fontSize: 10, color: '#0a0a0a', fontWeight: 900 }}>✓</span>}
-                  </div>
-                  <span style={{ fontSize: 13, color: habits[h.id] ? '#4ade80' : '#e2e8f0' }}>{h.label}</span>
-                </button>
-              ))}
+              {HABITS.map(h => {
+                const done = !!habits[h.id];
+                return (
+                  <button key={h.id} onClick={() => toggleHabit(h.id)} style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '11px 14px', borderRadius: 10, width: '100%',
+                    border: done ? '1px solid rgba(74,222,128,0.3)' : `1px solid ${C.border}`,
+                    background: done ? 'rgba(74,222,128,0.08)' : 'rgba(255,255,255,0.03)',
+                    cursor: 'pointer', transition: 'all 0.2s',
+                  }}>
+                    <div style={{
+                      width: 18, height: 18, borderRadius: '50%', flexShrink: 0,
+                      border: done ? '2px solid #4ade80' : '2px solid rgba(255,255,255,0.2)',
+                      background: done ? '#4ade80' : 'transparent',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      {done && <span style={{ fontSize: 9, color: '#0a0a0a', fontWeight: 900 }}>✓</span>}
+                    </div>
+                    <span style={{ fontSize: 13, color: done ? C.green : C.dim, textDecoration: done ? 'line-through' : 'none' }}>
+                      {h.label}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
-            <div style={{ marginTop: 16, padding: '10px 14px', background: '#ffffff05', borderRadius: 8, fontSize: 12, color: '#94a3b8', textAlign: 'center' }}>
-              {doneCount === HABITS.length ? '🎉 All habits complete!' : `${HABITS.length - doneCount} habit${HABITS.length - doneCount !== 1 ? 's' : ''} remaining`}
+            <div style={{
+              marginTop: 12, fontSize: 11.5, color: C.muted, textAlign: 'center',
+              padding: '8px', background: 'rgba(255,255,255,0.02)', borderRadius: 8,
+            }}>
+              {doneCount === HABITS.length ? '🎉 All done today!' : `${doneCount}/${HABITS.length} habits complete`}
+            </div>
+          </div>
+
+          {/* AI CONTENT STUDIO */}
+          <div style={{ ...card(), flex: 1 }}>
+            <div style={sectionLabel}>🎙️ Content Studio</div>
+            <div style={{ fontSize: 11.5, color: C.muted, marginBottom: 12 }}>
+              Hooks, captions & scripts for tunedinwithtiff
+            </div>
+            <div style={{
+              background: 'rgba(0,0,0,0.2)', borderRadius: 10, padding: 12,
+              minHeight: 160, maxHeight: 280, overflowY: 'auto', marginBottom: 10,
+            }}>
+              {chatHistory.length === 0 && (
+                <div style={{ color: 'rgba(148,163,184,0.4)', fontSize: 12, textAlign: 'center', paddingTop: 40 }}>
+                  Ask for a hook, caption, or script idea...
+                </div>
+              )}
+              {chatHistory.map((m, i) => (
+                <div key={i} style={{
+                  marginBottom: 10, padding: '8px 12px', borderRadius: 8,
+                  background: m.role === 'user' ? 'rgba(124,58,237,0.2)' : 'rgba(255,255,255,0.05)',
+                  fontSize: 12.5, lineHeight: 1.6, color: C.text,
+                }}>
+                  <span style={{ color: m.role === 'user' ? C.purple : C.blue, fontWeight: 700, fontSize: 11 }}>
+                    {m.role === 'user' ? 'You' : 'AI'}:{' '}
+                  </span>
+                  {m.content}
+                </div>
+              ))}
+              {chatLoading && (
+                <div style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', fontSize: 12, color: C.muted }}>
+                  ✍️ Writing...
+                </div>
+              )}
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                value={chatInput}
+                onChange={e => setChatInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && sendChat()}
+                placeholder="Write a hook for my morning routine..."
+                style={{
+                  flex: 1, background: 'rgba(255,255,255,0.06)',
+                  border: `1px solid ${C.border}`, borderRadius: 8,
+                  padding: '9px 12px', color: C.text, fontSize: 12.5, outline: 'none',
+                }}
+              />
+              <button onClick={sendChat} disabled={chatLoading} style={{
+                background: 'linear-gradient(135deg, #7c3aed, #2563eb)',
+                color: '#fff', border: 'none', borderRadius: 8,
+                padding: '9px 14px', fontWeight: 600, fontSize: 12, cursor: 'pointer',
+              }}>→</button>
             </div>
           </div>
         </div>
       </div>
 
-      <div style={{ borderTop: '1px solid #ffffff10', padding: '24px 32px' }}>
-        <div style={S.sectionTitle}>📅 Calendar & Tasks</div>
-        <SecondBrain />
-      </div>
-
-      <div style={{ borderTop: '1px solid #ffffff10', padding: '24px 32px' }}>
-        <div style={S.sectionTitle}>🧠 Your Second Brain</div>
+      {/* DOMAIN HUB */}
+      <div style={{ padding: '0 36px 40px', borderTop: `1px solid ${C.border}`, paddingTop: 28 }}>
+        <div style={sectionLabel}>🧠 Your Second Brain</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
           {DOMAINS.map(d => (
-            <a key={d.name} href={d.href} style={S.domainCard}>
-              <div style={{ fontSize: 24, marginBottom: 8 }}>{d.emoji}</div>
-              <div style={{ fontWeight: 600, fontSize: 14 }}>{d.name}</div>
-              <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>{d.desc}</div>
+            <a key={d.name} href={d.href} style={{
+              background: C.surface, border: `1px solid ${C.border}`,
+              borderRadius: 14, padding: '18px 16px',
+              textDecoration: 'none', color: 'inherit', display: 'block',
+              transition: 'all 0.2s',
+            }}
+              onMouseEnter={e => { e.currentTarget.style.background = C.surfaceHover; e.currentTarget.style.borderColor = C.borderAccent; }}
+              onMouseLeave={e => { e.currentTarget.style.background = C.surface; e.currentTarget.style.borderColor = C.border; }}
+            >
+              <div style={{ fontSize: 26, marginBottom: 10 }}>{d.emoji}</div>
+              <div style={{ fontWeight: 600, fontSize: 13.5, color: C.text }}>{d.name}</div>
+              <div style={{ fontSize: 12, color: C.muted, marginTop: 3 }}>{d.desc}</div>
             </a>
           ))}
         </div>
