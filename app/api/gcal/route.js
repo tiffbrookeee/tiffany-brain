@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 
 const GCAL_API = 'https://www.googleapis.com/calendar/v3';
