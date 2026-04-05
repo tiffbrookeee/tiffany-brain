@@ -1,9 +1,21 @@
 import { NextResponse } from 'next/server';
 
+function decodeEntities(str) {
+  return str
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(parseInt(code, 10)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#39;/g, "'");
+}
+
 async function fetchRSS(url, sourceName) {
   try {
     const r = await fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; TiffanyBrain/1.0; +https://tiffany-brain.vercel.app)' },
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; TiffanyBrain/1.0)' },
       next: { revalidate: 3600 },
     });
     if (!r.ok) return [];
@@ -14,9 +26,9 @@ async function fetchRSS(url, sourceName) {
     while ((m = itemRe.exec(xml)) !== null && items.length < 6) {
       const b = m[1];
       const title = (b.match(/<title[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/) || [])[1] || '';
-      const link = (b.match(/<link>([^<]+)<\/link>/) || b.match(/<link[^/]*\/?>/) || [])[1] || '';
+      const link = (b.match(/<link>([^<]+)<\/link>/) || [])[1] || '';
       const pub = (b.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/) || [])[1] || '';
-      const clean = title.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim();
+      const clean = decodeEntities(title.replace(/<[^>]+>/g, '').trim());
       if (clean) items.push({ title: clean, url: link.trim(), source: sourceName, published: pub.trim() });
     }
     return items;
