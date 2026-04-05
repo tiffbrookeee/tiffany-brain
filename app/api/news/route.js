@@ -2,61 +2,49 @@ import { NextResponse } from 'next/server';
 
 async function fetchRSS(url, sourceName) {
   try {
-    const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}&count=6`;
-    const r = await fetch(apiUrl, { next: { revalidate: 3600 } });
+    const r = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; TiffanyBrain/1.0; +https://tiffany-brain.vercel.app)' },
+      next: { revalidate: 3600 },
+    });
     if (!r.ok) return [];
-    const data = await r.json();
-    if (data.status !== 'ok') return [];
-    return (data.items || []).map((item) => ({
-      title: (item.title || '').replace(/<[^>]+>/g, '').trim(),
-      url: item.link || '',
-      source: sourceName || data.feed?.title || '',
-      published: item.pubDate || '',
-    }));
-  } catch {
-    return [];
-  }
+    const xml = await r.text();
+    const items = [];
+    const itemRe = /<item[^>]*>([\s\S]*?)<\/item>/gi;
+    let m;
+    while ((m = itemRe.exec(xml)) !== null && items.length < 6) {
+      const b = m[1];
+      const title = (b.match(/<title[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/) || [])[1] || '';
+      const link = (b.match(/<link>([^<]+)<\/link>/) || b.match(/<link[^/]*\/?>/) || [])[1] || '';
+      const pub = (b.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/) || [])[1] || '';
+      const clean = title.replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim();
+      if (clean) items.push({ title: clean, url: link.trim(), source: sourceName, published: pub.trim() });
+    }
+    return items;
+  } catch { return []; }
 }
 
 export async function GET() {
   const [aiA, aiB, mktA, mktB, worldA, worldB] = await Promise.allSettled([
     fetchRSS('https://venturebeat.com/ai/feed/', 'VentureBeat AI'),
-    fetchRSS(
-      'https://techcrunch.com/category/artificial-intelligence/feed/',
-      'TechCrunch AI'
-    ),
-    fetchRSS(
-      'https://feeds.feedburner.com/entrepreneur/latest',
-      'Entrepreneur'
-    ),
-    fetchRSS(
-      'https://www.marketingweek.com/feed/',
-      'Marketing Week'
-    ),
+    fetchRSS('https://techcrunch.com/category/artificial-intelligence/feed/', 'TechCrunch'),
+    fetchRSS('https://feeds.feedburner.com/entrepreneur/latest', 'Entrepreneur'),
+    fetchRSS('https://feeds.feedburner.com/fastcompany/headlines', 'Fast Company'),
     fetchRSS('https://feeds.bbci.co.uk/news/rss.xml', 'BBC News'),
-    fetchRSS(
-      'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml',
-      'New York Times'
-    ),
+    fetchRSS('https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml', 'New York Times'),
   ]);
-
-  function val(settled) {
-    return settled.status === 'fulfilled' ? settled.value : [];
-  }
-
+  function val(s) { return s.status === 'fulfilled' ? s.value : []; }
   const seen = new Set();
-  function dedup(items) {
-    return items.filter((i) => {
-      const key = i.title.toLowerCase().trim();
-      if (!key || seen.has(key)) return false;
-      seen.add(key);
+  function dedup(arr) {
+    return arr.filter((i) => {
+      const k = i.title.toLowerCase().trim();
+      if (!k || seen.has(k)) return false;
+      seen.add(k);
       return true;
     });
   }
-
-  const ai = dedup([...val(aiA), ...val(aiB)]).slice(0, 6);
-  const marketing = dedup([...val(mktA), ...val(mktB)]).slice(0, 6);
-  const world = dedup([...val(worldA), ...val(worldB)]).slice(0, 6);
-
-  return NextResponse.json({ ai, marketing, world });
+  return NextResponse.json({
+    ai: dedup([...val(aiA), ...val(aiB)]).slice(0, 6),
+    marketing: dedup([...val(mktA), ...val(mktB)]).slice(0, 6),
+    world: dedup([...val(worldA), ...val(worldB)]).slice(0, 6),
+  });
 }
