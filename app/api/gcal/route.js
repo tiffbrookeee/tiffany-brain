@@ -14,32 +14,43 @@ async function getAccessToken() {
     }),
   });
   const data = await res.json();
+  if (!data.access_token) throw new Error(data.error_description || 'Failed to get token');
   return data.access_token;
 }
 
 export async function GET(request) {
   if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_REFRESH_TOKEN) {
-    return NextResponse.json({ events: [], connected: false });
+    return NextResponse.json({ events: [], connected: false, error: 'Missing Google credentials' });
   }
   try {
     const token = await getAccessToken();
     const searchParams = new URL(request.url).searchParams;
-    const timeMin = searchParams.get('timeMin') || new Date().toISOString();
-    const timeMax =
-      searchParams.get('timeMax') ||
-      new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString();
+
+    // Default to full day (start of today to start of tomorrow)
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString();
+
+    const timeMin = searchParams.get('timeMin') || startOfDay;
+    const timeMax = searchParams.get('timeMax') || endOfDay;
 
     const res = await fetch(
-      `${GCAL_API}/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime&maxResults=50`,
-      { headers: { Authorization: `Bearer ${token}` } }
+      GCAL_API + '/calendars/primary/events?timeMin=' + encodeURIComponent(timeMin) +
+      '&timeMax=' + encodeURIComponent(timeMax) + '&singleEvents=true&orderBy=startTime&maxResults=50',
+      { headers: { Authorization: 'Bearer ' + token } }
     );
     const data = await res.json();
+
+    if (!res.ok) {
+      return NextResponse.json({ events: [], connected: true, error: data.error?.message });
+    }
+
     const events = (data.items || []).map(
       ({ summary, start, end, location, htmlLink }) => ({
         title: summary || 'Event',
         start: start.dateTime || start.date,
         end: end.dateTime || end.date,
-        allDay: !!start.date,
+        allDay: !!start.date && !start.dateTime,
         location: location || null,
         url: htmlLink,
       })
