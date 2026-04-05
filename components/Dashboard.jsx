@@ -378,6 +378,66 @@ function TaskList({ tasks = [], onToggle }) {
   );
 }
 
+// ── Quick Add Task ──
+function QuickAddTask({ onAdd }) {
+  const [value, setValue] = useState('');
+  const [adding, setAdding] = useState(false);
+
+  async function handleAdd() {
+    const title = value.trim();
+    if (!title || adding) return;
+    setAdding(true);
+    try {
+      const r = await fetch('/api/notion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'task', title }),
+      });
+      const d = await r.json();
+      if (d.task) {
+        onAdd(d.task);
+        setValue('');
+      }
+    } catch {}
+    setAdding(false);
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter') handleAdd();
+  }
+
+  return (
+    <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+      <input
+        style={{ ...S.input, fontSize: 13, flex: 1 }}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={handleKey}
+        placeholder="Quick add task… press Enter"
+        disabled={adding}
+      />
+      <button
+        onClick={handleAdd}
+        disabled={adding || !value.trim()}
+        style={{
+          padding: '10px 14px',
+          background: value.trim() ? '#1A1A1A' : '#E2E0DB',
+          color: value.trim() ? '#fff' : '#9B9590',
+          border: 'none',
+          borderRadius: 10,
+          fontSize: 16,
+          fontWeight: 700,
+          cursor: value.trim() ? 'pointer' : 'default',
+          flexShrink: 0,
+          transition: 'all 0.15s',
+        }}
+      >
+        {adding ? '…' : '+'}
+      </button>
+    </div>
+  );
+}
+
 // ── Domain Hub ──
 function DomainHub() {
   return (
@@ -860,6 +920,10 @@ export default function Dashboard() {
     });
   }
 
+  function addTask(newTask) {
+    setTasks((prev) => [newTask, ...prev]);
+  }
+
   // Merge local done state with API data
   const mergedTasks = tasks.map((t) => ({
     ...t,
@@ -906,7 +970,8 @@ export default function Dashboard() {
             <Label emoji="✅">
               Tasks · {pendingCount} remaining
             </Label>
-            <TaskList tasks={mergedTasks} onToggle={toggleTask} />
+            <QuickAddTask onAdd={addTask} />
+          <TaskList tasks={mergedTasks} onToggle={toggleTask} />
           </Card>
         </div>
 
