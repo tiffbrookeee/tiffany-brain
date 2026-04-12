@@ -46,19 +46,15 @@ async function patchPage(pageId, properties) {
 
 // ── MAPPERS ────────────────────────────────────────────────────────────────────
 function mapTask(page) {
+  const props = page.properties;
   return {
     id: page.id,
-    title: page.properties.Task?.title?.[0]?.plain_text
-      || page.properties.Name?.title?.[0]?.plain_text
-      || 'Untitled',
-    status: page.properties.Status?.select?.name
-      || page.properties.Status?.status?.name
-      || 'To Do',
-    priority: page.properties.Priority?.select?.name || 'Medium',
-    area: page.properties.Area?.select?.name || page.properties.Domain?.select?.name || null,
-    due: page.properties.Due?.date?.start || null,
-    done: (page.properties.Status?.select?.name === 'Done'
-      || page.properties.Status?.status?.name === 'Done'),
+    title: props.Task?.title?.[0]?.plain_text || props.Name?.title?.[0]?.plain_text || 'Untitled',
+    status: props.Status?.select?.name || props.Status?.status?.name || 'To Do',
+    priority: props.Priority?.select?.name || null,
+    area: props.Bucket?.select?.name || props.Area?.select?.name || props.Domain?.select?.name || null,
+    due: props.Due?.date?.start || null,
+    done: false,
     notionUrl: page.url,
     source: 'notion',
   };
@@ -86,21 +82,11 @@ export async function GET(request) {
 
   try {
     if (type === 'tasks') {
-      // Try both select and status filter types for compatibility
-      let pages;
-      try {
-        pages = await queryDB(
-          DB.tasks,
-          { property: 'Status', select: { does_not_equal: 'Done' } },
-          [{ property: 'Due', direction: 'ascending' }]
-        );
-      } catch {
-        pages = await queryDB(
-          DB.tasks,
-          { property: 'Status', status: { does_not_equal: 'Done' } },
-          [{ property: 'Due', direction: 'ascending' }]
-        );
-      }
+      const pages = await queryDB(
+        DB.tasks,
+        { property: 'Status', select: { equals: 'To Do' } },
+        []
+      );
       return NextResponse.json({ tasks: pages.map(mapTask) });
     }
 
@@ -117,8 +103,8 @@ export async function GET(request) {
       const [taskPages, contentPages] = await Promise.all([
         queryDB(
           DB.tasks,
-          { property: 'Status', select: { does_not_equal: 'Done' } },
-          [{ property: 'Due', direction: 'ascending' }]
+          { property: 'Status', select: { equals: 'To Do' } },
+          []
         ),
         queryDB(
           DB.content,
@@ -144,13 +130,12 @@ export async function POST(request) {
     const { type } = body;
 
     if (type === 'task') {
-      const { title, priority = 'Medium', area, due } = body;
+      const { title, area, due } = body;
       const properties = {
         Task: { title: [{ text: { content: title } }] },
         Status: { select: { name: 'To Do' } },
-        Priority: { select: { name: priority } },
       };
-      if (area) properties.Area = { select: { name: area } };
+      if (area) properties.Bucket = { select: { name: area } };
       if (due) properties.Due = { date: { start: due } };
       const page = await createPage(DB.tasks, properties);
       return NextResponse.json({ task: mapTask(page) });
@@ -178,18 +163,20 @@ export async function POST(request) {
 
 export async function PATCH(request) {
   try {
-    const { pageId, taskId, type, status, priority } = await request.json();
+    const { pageId, taskId, status } = await request.json();
     const id = pageId || taskId;
     if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
 
-    if (type === 'task' || taskId) {
-      const properties = {};
-      if (status) properties.Status = { select: { name: status } };
-      if (!status) properties.Status = { select: { name: 'Done' } };
-      if (priority) properties.Priority = { select: { name: priority } };
-      await patchPage(id, properties);
-    } else if (type === 'content') {
-      await patchPage(id, { Status: { select: { name: status } } });
+    // Try to mark as Done; fall back to archiving if Done isn't a valid status option
+    try {
+      await patchPage(id, { Status: { select: { name: status || 'Done' } } });
+    } catch {
+      const res = await fetch(`${NOTION_API}/pages/${id}`, {
+        method: 'PATCH',
+        headers: HEADERS,
+        body: JSON.stringify({ archived: true }),
+      });
+      if (!res.ok) throw new Error('Could not complete task');
     }
 
     return NextResponse.json({ success: true });
