@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 
-// ─── CONSTANTS ──────────────────────────────────────────────────────────────
+// ─── CONSTANTS ────────────────────────────────────────────────────────────────
 const DOMAINS = [
   {
     id: 'ypo',
@@ -52,7 +52,7 @@ const HABITS = [
   { id: 'skin', emoji: '🌙', label: 'Night Skincare' },
 ];
 
-// ─── HELPERS ────────────────────────────────────────────────────────────────
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
 function getGreeting() {
   const h = new Date().getHours();
   if (h < 12) return 'Good morning';
@@ -80,15 +80,13 @@ function formatTime(str) {
   }
 }
 
-// ─── STYLES ────────────────────────────────────────────────────────────────
+// ─── STYLES ──────────────────────────────────────────────────────────────────
 const ACCENT = '#1A1A1A';
-
 const S = {
   root: {
     minHeight: '100vh',
     background: '#F8F7F4',
-    fontFamily:
-      '-apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", sans-serif',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", sans-serif',
     color: '#1A1A1A',
   },
   header: {
@@ -210,8 +208,7 @@ const S = {
   },
 };
 
-// ─── SUB-COMPONENTS ─────────────────────────────────────────────────────────
-
+// ─── SUB-COMPONENTS ───────────────────────────────────────────────────────────
 function Label({ emoji, children }) {
   return (
     <div style={S.sectionLabel}>
@@ -367,7 +364,12 @@ function TaskList({ tasks = [], onToggle }) {
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              style={{ fontSize: 13, color: '#C0BAB4', flexShrink: 0, textDecoration: 'none' }}
+              style={{
+                fontSize: 13,
+                color: '#C0BAB4',
+                flexShrink: 0,
+                textDecoration: 'none',
+              }}
             >
               ↗
             </a>
@@ -517,7 +519,6 @@ function DomainHub() {
 // ── Morning Brief (News) ──
 function MorningBrief({ news = {}, loading }) {
   const [tab, setTab] = useState('ai');
-
   const tabs = [
     { id: 'ai', label: '🤖 AI & Tech', items: news.ai || [] },
     { id: 'marketing', label: '📣 Marketing', items: news.marketing || [] },
@@ -562,7 +563,6 @@ function MorningBrief({ news = {}, loading }) {
           </button>
         ))}
       </div>
-
       {loading ? (
         <div
           style={{
@@ -639,7 +639,7 @@ function AIChatInterface() {
       const r = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text }),
+        body: JSON.stringify({ messages: [{ role: 'user', content: text }] }),
       });
       const d = await r.json();
       setMessages((m) => [
@@ -805,7 +805,6 @@ function MarketPulse({ data = [] }) {
     (d) => !['BTC-USD', 'XRP-USD', 'ETH-USD'].includes(d.ticker)
   );
   if (!stocks.length) return null;
-
   return (
     <Card>
       <Label emoji="📊">Market Pulse</Label>
@@ -853,16 +852,14 @@ function MarketPulse({ data = [] }) {
   );
 }
 
-// ─── MAIN DASHBOARD ─────────────────────────────────────────────────────────
+// ─── MAIN DASHBOARD ───────────────────────────────────────────────────────────
 export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
   const [cal, setCal] = useState({ events: [], connected: false });
   const [news, setNews] = useState({});
   const [market, setMarket] = useState([]);
   const [habits, setHabits] = useState(new Set());
-  const [tasksDone, setTasksDone] = useState(new Set());
   const [newsLoading, setNewsLoading] = useState(true);
-
   const now = new Date();
   const dateKey = now.toDateString();
 
@@ -913,23 +910,21 @@ export default function Dashboard() {
   }
 
   function toggleTask(id) {
-    setTasksDone((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
+    // Optimistically remove task from list
+    setTasks((prev) => prev.filter((t) => t.id !== id));
+    // Call API to mark done in Notion
+    fetch('/api/tasks', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ taskId: id }),
+    }).catch(() => {});
   }
 
   function addTask(newTask) {
     setTasks((prev) => [newTask, ...prev]);
   }
 
-  // Merge local done state with API data
-  const mergedTasks = tasks.map((t) => ({
-    ...t,
-    done: tasksDone.has(t.id) || t.done,
-  }));
-  const pendingCount = mergedTasks.filter((t) => !t.done).length;
+  const pendingCount = tasks.filter((t) => !t.done).length;
 
   return (
     <div style={S.root}>
@@ -945,6 +940,8 @@ export default function Dashboard() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <a href="/content" style={S.notionBtn}>✍️ Content</a>
+          <a href="/emails" style={S.notionBtn}>📧 Emails</a>
           <a
             href="https://www.notion.so/32583fbef7cf81cf9930eaa9505e476e"
             target="_blank"
@@ -971,7 +968,7 @@ export default function Dashboard() {
               Tasks · {pendingCount} remaining
             </Label>
             <QuickAddTask onAdd={addTask} />
-          <TaskList tasks={mergedTasks} onToggle={toggleTask} />
+            <TaskList tasks={tasks} onToggle={toggleTask} />
           </Card>
         </div>
 
