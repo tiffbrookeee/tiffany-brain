@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 const NOTION_API = 'https://api.notion.com/v1';
 const DB = {
-  tasks: 'd0df52150e60480b991ea8d875de5c9e',
+  tasks: process.env.NOTION_TASKS_DATABASE_ID,
   content: '0f11c6acb31f4d32bfb730c060576c61',
 };
 const HEADERS = {
@@ -13,7 +13,8 @@ const HEADERS = {
 
 async function queryDB(dbId, filter, sorts = []) {
   const res = await fetch(`${NOTION_API}/databases/${dbId}/query`, {
-    method: 'POST', headers: HEADERS,
+    method: 'POST',
+    headers: HEADERS,
     body: JSON.stringify({ filter, sorts, page_size: 50 }),
   });
   const data = await res.json();
@@ -23,7 +24,8 @@ async function queryDB(dbId, filter, sorts = []) {
 
 async function createPage(parent_id, properties) {
   const res = await fetch(`${NOTION_API}/pages`, {
-    method: 'POST', headers: HEADERS,
+    method: 'POST',
+    headers: HEADERS,
     body: JSON.stringify({ parent: { database_id: parent_id }, properties }),
   });
   const data = await res.json();
@@ -33,7 +35,8 @@ async function createPage(parent_id, properties) {
 
 async function patchPage(pageId, properties) {
   const res = await fetch(`${NOTION_API}/pages/${pageId}`, {
-    method: 'PATCH', headers: HEADERS,
+    method: 'PATCH',
+    headers: HEADERS,
     body: JSON.stringify({ properties }),
   });
   const data = await res.json();
@@ -41,16 +44,21 @@ async function patchPage(pageId, properties) {
   return data;
 }
 
-// ── MAPPERS ──────────────────────────────────────────────────────────────────
+// ── MAPPERS ────────────────────────────────────────────────────────────────────
 function mapTask(page) {
   return {
     id: page.id,
-    title: page.properties.Task?.title?.[0]?.plain_text || 'Untitled',
-    status: page.properties.Status?.select?.name || 'To Do',
+    title: page.properties.Task?.title?.[0]?.plain_text
+      || page.properties.Name?.title?.[0]?.plain_text
+      || 'Untitled',
+    status: page.properties.Status?.select?.name
+      || page.properties.Status?.status?.name
+      || 'To Do',
     priority: page.properties.Priority?.select?.name || 'Medium',
-    area: page.properties.Area?.select?.name || null,
+    area: page.properties.Area?.select?.name || page.properties.Domain?.select?.name || null,
     due: page.properties.Due?.date?.start || null,
-    done: page.properties.Status?.select?.name === 'Done',
+    done: (page.properties.Status?.select?.name === 'Done'
+      || page.properties.Status?.status?.name === 'Done'),
     notionUrl: page.url,
     source: 'notion',
   };
@@ -78,15 +86,27 @@ export async function GET(request) {
 
   try {
     if (type === 'tasks') {
-      const pages = await queryDB(DB.tasks,
-        { property: 'Status', select: { does_not_equal: 'Done' } },
-        [{ property: 'Due', direction: 'ascending' }]
-      );
+      // Try both select and status filter types for compatibility
+      let pages;
+      try {
+        pages = await queryDB(
+          DB.tasks,
+          { property: 'Status', select: { does_not_equal: 'Done' } },
+          [{ property: 'Due', direction: 'ascending' }]
+        );
+      } catch {
+        pages = await queryDB(
+          DB.tasks,
+          { property: 'Status', status: { does_not_equal: 'Done' } },
+          [{ property: 'Due', direction: 'ascending' }]
+        );
+      }
       return NextResponse.json({ tasks: pages.map(mapTask) });
     }
 
     if (type === 'content') {
-      const pages = await queryDB(DB.content,
+      const pages = await queryDB(
+        DB.content,
         { property: 'Status', select: { does_not_equal: 'Posted' } },
         [{ property: 'Post Date', direction: 'ascending' }]
       );
@@ -95,11 +115,13 @@ export async function GET(request) {
 
     if (type === 'all') {
       const [taskPages, contentPages] = await Promise.all([
-        queryDB(DB.tasks,
+        queryDB(
+          DB.tasks,
           { property: 'Status', select: { does_not_equal: 'Done' } },
           [{ property: 'Due', direction: 'ascending' }]
         ),
-        queryDB(DB.content,
+        queryDB(
+          DB.content,
           { property: 'Status', select: { does_not_equal: 'Posted' } },
           [{ property: 'Post Date', direction: 'ascending' }]
         ),
@@ -130,7 +152,6 @@ export async function POST(request) {
       };
       if (area) properties.Area = { select: { name: area } };
       if (due) properties.Due = { date: { start: due } };
-
       const page = await createPage(DB.tasks, properties);
       return NextResponse.json({ task: mapTask(page) });
     }
@@ -145,7 +166,6 @@ export async function POST(request) {
       if (notes) properties.Notes = { rich_text: [{ text: { content: notes } }] };
       if (contentType) properties.Type = { select: { name: contentType } };
       if (platforms.length) properties.Platform = { multi_select: platforms.map(p => ({ name: p })) };
-
       const page = await createPage(DB.content, properties);
       return NextResponse.json({ content: mapContent(page) });
     }
@@ -158,16 +178,19 @@ export async function POST(request) {
 
 export async function PATCH(request) {
   try {
-    const { pageId, type, status, priority } = await request.json();
+    const { pageId, taskId, type, status, priority } = await request.json();
+    const id = pageId || taskId;
+    if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
 
-if (type === 'task') {
-  const properties = {};
-  if (status) properties.Status = { select: { name: status } };
-  if (priority) properties.Priority = { select: { name: priority } };
-  await patchPage(pageId, properties);
-} else if (type === 'content') {
-  await patchPage(pageId, { Status: { select: { name: status } } });
-}
+    if (type === 'task' || taskId) {
+      const properties = {};
+      if (status) properties.Status = { select: { name: status } };
+      if (!status) properties.Status = { select: { name: 'Done' } };
+      if (priority) properties.Priority = { select: { name: priority } };
+      await patchPage(id, properties);
+    } else if (type === 'content') {
+      await patchPage(id, { Status: { select: { name: status } } });
+    }
 
     return NextResponse.json({ success: true });
   } catch (err) {
