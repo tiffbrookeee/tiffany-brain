@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 
 const NOTION_HUB_URL = 'https://www.notion.so/5a7f7b8d11b5445f9d342157b84c609f';
 
-const GCAL_EMBED_URL = 'https://calendar.google.com/calendar/embed?src=tiffbrookeee%40gmail.com&src=8821afc8c72b42163405fd1246773e1c6ebee234971253c7b8e113c533f8ce86%40group.calendar.google.com&src=fc02c25342dbd7998dfddc12d1e816a783b54978664480bf49cd116d232c47d8%40group.calendar.google.com&src=41e7773cbb56084733b459e738eeab2608997e849129f527cc559802d32adfae%40group.calendar.google.com&src=b2a01c8849cde0ef81bd1a46d35991c3ba46e897d30d1ae3740d49e06f81d544%40group.calendar.google.com&src=b88006b0ac2dee24b36e0093712ec2f4b781e2ed726bf5a047dc7319fd46d717%40group.calendar.google.com&src=c2cc86c287a70229e6dfd5be8848428a4b146bba48b4b2b08b39a33f176c356f%40group.calendar.google.com&src=e8061bb2a52b658bcceaca10dd930ffbe6f7c80f1c84fd461103f20020fc161c%40group.calendar.google.com&ctz=America%2FPhoenix';
-export default function MorningPage() {
+const GCAL_BASE = 'https://calendar.google.com/calendar/embed?ctz=America%2FPhoenix';
+const GCAL_SRCS = '&src=tiffbrookeee%40gmail.com&src=8821afc8c72b42163405fd1246773e1c6ebee234971253c7b8e113c533f8ce86%40group.calendar.google.com&src=fc02c25342dbd7998dfddc12d1e816a783b54978664480bf49cd116d232c47d8%40group.calendar.google.com&src=41e7773cbb56084733b459e738eeab2608997e849129f527cc559802d32adfae%40group.calendar.google.com&src=b2a01c8849cde0ef81bd1a46d35991c3ba46e897d30d1ae3740d49e06f81d544%40group.calendar.google.com&src=b88006b0ac2dee24b36e0093712ec2f4b781e2ed726bf5a047dc7319fd46d717%40group.calendar.google.com&src=c2cc86c287a70229e6dfd5be8848428a4b146bba48b4b2b08b39a33f176c356f%40group.calendar.google.com&src=e8061bb2a52b658bcceaca10dd930ffbe6f7c80f1c84fd461103f20020fc161c%40group.calendar.google.com';
+const GCAL_EMBED_URL = GCAL_BASE + GCAL_SRCS;
   const [time, setTime] = useState('');
   const [date, setDate] = useState('');
   const [greeting, setGreeting] = useState('');
