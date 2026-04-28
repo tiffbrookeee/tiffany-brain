@@ -6,8 +6,7 @@ const NOTION_HUB_URL = 'https://www.notion.so/5a7f7b8d11b5445f9d342157b84c609f';
 
 // Paste your Google Calendar embed URL here
 // Get it: Google Calendar → Settings → your calendar → Integrate calendar → copy src= URL from the iframe embed code
-const GCAL_EMBED_URL = process.env.NEXT_PUBLIC_GCAL_EMBED_URL || '';
-
+const GCAL_EMBED_URL = 'https://calendar.google.com/calendar/embed?src=tiffbrookeee%40gmail.com&src=8821afc8c72b42163405fd1246773e1c6ebee234971253c7b8e113
 export default function MorningPage() {
   const [time, setTime] = useState('');
   const [date, setDate] = useState('');
